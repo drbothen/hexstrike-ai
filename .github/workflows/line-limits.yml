@@ -1,0 +1,71 @@
+name: Line Limit Enforcement
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  check-line-limits:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Check Python file line limits
+      run: |
+        echo "Checking that all Python modules are ≤300 lines..."
+        
+        # Find all Python files in src/ directory (excluding legacy and __pycache__)
+        find src/ -name "*.py" \
+          -not -path "*/legacy/*" \
+          -not -path "*/__pycache__/*" \
+          -not -path "*/.*" \
+          | while read file; do
+          
+          line_count=$(wc -l < "$file")
+          
+          if [ "$line_count" -gt 300 ]; then
+            echo "❌ FAIL: $file has $line_count lines (exceeds 300 line limit)"
+            echo "::error file=$file,line=1::File exceeds 300 line limit ($line_count lines)"
+            exit 1
+          else
+            echo "✅ PASS: $file has $line_count lines"
+          fi
+        done
+        
+        echo "All Python modules comply with 300-line limit!"
+        
+    - name: Generate line count report
+      run: |
+        echo "# Line Count Report" > line_count_report.md
+        echo "" >> line_count_report.md
+        echo "| Module | Lines | Status |" >> line_count_report.md
+        echo "|--------|-------|--------|" >> line_count_report.md
+        
+        find src/ -name "*.py" \
+          -not -path "*/legacy/*" \
+          -not -path "*/__pycache__/*" \
+          | sort | while read file; do
+          
+          line_count=$(wc -l < "$file")
+          relative_path=${file#src/}
+          
+          if [ "$line_count" -gt 300 ]; then
+            status="❌ EXCEEDS LIMIT"
+          elif [ "$line_count" -gt 280 ]; then
+            status="⚠️ NEAR LIMIT"
+          else
+            status="✅ OK"
+          fi
+          
+          echo "| $relative_path | $line_count | $status |" >> line_count_report.md
+        done
+        
+    - name: Upload line count report
+      uses: actions/upload-artifact@v3
+      with:
+        name: line-count-report
+        path: line_count_report.md

@@ -1,0 +1,46 @@
+repos:
+  - repo: local
+    hooks:
+      - id: line-limit-check
+        name: Check Python file line limits
+        entry: bash
+        language: system
+        args:
+          - -c
+          - |
+            echo "Checking that all Python modules are ≤300 lines..."
+            find src/ -name "*.py" \
+              -not -path "*/legacy/*" \
+              -not -path "*/__pycache__/*" \
+              -not -path "*/.*" \
+              | while read file; do
+              line_count=$(wc -l < "$file")
+              if [ "$line_count" -gt 300 ]; then
+                echo "❌ FAIL: $file has $line_count lines (exceeds 300 line limit)"
+                exit 1
+              else
+                echo "✅ PASS: $file has $line_count lines"
+              fi
+            done
+        files: \.py$
+        
+  - repo: https://github.com/psf/black
+    rev: 23.3.0
+    hooks:
+      - id: black
+        args: [--line-length=100]
+        files: ^src/
+        
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.0.0
+    hooks:
+      - id: flake8
+        args: [--max-line-length=100, --ignore=E203,W503]
+        files: ^src/
+        
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        args: [--profile=black, --line-length=100]
+        files: ^src/

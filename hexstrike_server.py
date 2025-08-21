@@ -1,102 +1,115 @@
 #!/usr/bin/env python3
 """
-HexStrike AI - Advanced Penetration Testing Framework Server
+HexStrike AI - Advanced Penetration Testing Framework v6.0
+Enhanced with modular architecture, modern visual engine, and 100+ security tools integration
 
-Enhanced with AI-Powered Intelligence & Automation
-🚀 Bug Bounty | CTF | Red Team | Security Research
+Features:
+- Modular architecture following DRY & SOLID principles
+- AI-powered tool selection and parameter optimization
+- Modern visual interface with cyber-themed styling
+- Intelligent error handling and recovery
+- Comprehensive tool coverage (100+ security tools)
+- Bug bounty and CTF workflow automation
+- Real-time process monitoring and management
+- Advanced caching and performance optimization
+- Backward compatibility through compatibility shims
 
-RECENT ENHANCEMENTS (v6.0):
-✅ Complete color consistency with reddish hacker theme
-✅ Removed duplicate classes (PythonEnvironmentManager, CVEIntelligenceManager)
-✅ Enhanced visual output with ModernVisualEngine
-✅ Organized code structure with proper section headers
-✅ 100+ security tools with intelligent parameter optimization
-✅ AI-driven decision engine for tool selection
-✅ Advanced error handling and recovery systems
-
-Architecture: Two-script system (hexstrike_server.py + hexstrike_mcp.py)
-Framework: FastMCP integration for AI agent communication
+Architecture designed for AI-powered intelligence and automation.
 """
 
-import argparse
-import json
-import logging
 import os
-import subprocess
 import sys
-import traceback
-import threading
+import json
 import time
-import hashlib
-import pickle
-import base64
-import queue
-from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timedelta
-from typing import Dict, Any, Optional
-from collections import OrderedDict
-import shutil
-import venv
-import zipfile
-from pathlib import Path
-from flask import Flask, request, jsonify
-import psutil
+import logging
+import subprocess
+import threading
 import signal
+import shutil
+import hashlib
+import sqlite3
 import requests
-import re
 import socket
+import ipaddress
 import urllib.parse
+import re
+import queue
+import venv
+import base64
+import pickle
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Dict, Any, List, Optional, Set, Tuple, Union
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List, Set, Tuple
+from functools import wraps
+from collections import defaultdict, deque, OrderedDict
+from concurrent.futures import ThreadPoolExecutor
+import psutil
 import asyncio
-import aiohttp
+import concurrent.futures
+from flask import Flask, request, jsonify, render_template_string, send_file
+from flask_cors import CORS
 from urllib.parse import urljoin, urlparse, parse_qs
 from bs4 import BeautifulSoup
-import selenium
+import argparse
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, WebDriverException
-import mitmproxy
-from mitmproxy import http as mitmhttp
-from mitmproxy.tools.dump import DumpMaster
-from mitmproxy.options import Options as MitmOptions
 
-# ============================================================================
-# LOGGING CONFIGURATION (MUST BE FIRST)
-# ============================================================================
-
-# Configure logging with fallback for permission issues
+# Import modular components
 try:
+    sys.path.insert(0, str(Path(__file__).parent / "src"))
+    
+    from hexstrike.platform.logging import configure_logging, LogConfig
+    from hexstrike.platform.constants import API_HOST, API_PORT, COLORS
+    from hexstrike.interfaces.visual_engine import VisualEngine
+    from hexstrike.services.decision_service import DecisionService
+    from hexstrike.services.tool_execution_service import ToolExecutionService
+    from hexstrike.services.process_service import ProcessService
+    from hexstrike.adapters.flask_adapter import FlaskAdapter
+    from hexstrike.adapters.tool_registry import ToolRegistry
+    from hexstrike.domain.target_analysis import TargetProfile, TargetType, TechnologyStack
+    from hexstrike.platform.errors import ErrorHandler, ErrorType, RecoveryAction
+    
+    # Configure modular logging
+    log_config = LogConfig(
+        level="INFO",
+        file_path="hexstrike.log",
+        console_output=True
+    )
+    configure_logging(log_config)
+    
+    MODULAR_MODE = True
+    logger = logging.getLogger(__name__)
+    logger.info("🚀 HexStrike AI v6.0 - Modular Architecture Loaded")
+    
+except ImportError as e:
+    # Fallback to monolithic mode if modular components not available
+    MODULAR_MODE = False
+    
+    # Configure logging with enhanced formatting
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         handlers=[
-            logging.StreamHandler(sys.stdout),
-            logging.FileHandler('hexstrike.log')
+            logging.FileHandler('hexstrike.log'),
+            logging.StreamHandler()
         ]
     )
-except PermissionError:
-    # Fallback to console-only logging if file creation fails
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.StreamHandler(sys.stdout)
-        ]
-    )
-logger = logging.getLogger(__name__)
+    logger = logging.getLogger(__name__)
+    logger.warning(f"⚠️ Modular components not available ({e}), running in monolithic mode")
+    
+    # Global configuration for monolithic mode
+    API_PORT = 8888
+    API_HOST = "127.0.0.1"
 
-# Flask app configuration
+# Flask app initialization
 app = Flask(__name__)
-app.config['JSON_SORT_KEYS'] = False
-
-# API Configuration
-API_PORT = int(os.environ.get('HEXSTRIKE_PORT', 8888))
-API_HOST = os.environ.get('HEXSTRIKE_HOST', '127.0.0.1')
+CORS(app)
 
 # ============================================================================
 # MODERN VISUAL ENGINE (v2.0 ENHANCEMENT)
@@ -15407,4 +15420,34 @@ if __name__ == "__main__":
         if line.strip():
             logger.info(line)
     
-    app.run(host="0.0.0.0", port=API_PORT, debug=DEBUG_MODE)
+    # ============================================================================
+    # ============================================================================
+
+    if MODULAR_MODE:
+        # Import compatibility shims for backward compatibility
+        try:
+            from hexstrike.legacy.compatibility_shims import (
+                IntelligentDecisionEngine,
+                ModernVisualEngine,
+                IntelligentErrorHandler,
+                ProcessManager,
+                execute_command,
+                execute_command_with_recovery,
+                decision_engine as compat_decision_engine,
+                error_handler as compat_error_handler,
+                visual_engine as compat_visual_engine,
+                process_manager as compat_process_manager
+            )
+            
+            decision_engine = compat_decision_engine
+            error_handler = compat_error_handler
+            visual_engine = compat_visual_engine
+            process_manager = compat_process_manager
+            
+            logger.info("✅ Backward compatibility layer loaded successfully")
+            
+        except ImportError as e:
+            logger.warning(f"⚠️ Compatibility layer not available: {e}")
+    
+    # Start the Flask application
+    app.run(host=API_HOST, port=API_PORT, debug=DEBUG_MODE)

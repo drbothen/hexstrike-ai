@@ -186,7 +186,7 @@ sudo apt update && sudo apt install google-chrome-stable
 ### Start the Server
 
 ```bash
-# Start the MCP server
+# Start the HexStrike AI server (modular architecture)
 python3 hexstrike_server.py
 
 # Optional: Start with debug mode
@@ -194,15 +194,23 @@ python3 hexstrike_server.py --debug
 
 # Optional: Custom port configuration
 python3 hexstrike_server.py --port 8888
+
+# Start the MCP server for AI agent integration
+python3 hexstrike_mcp.py --server http://127.0.0.1:8888
 ```
 
 ### Verify Installation
 
 ```bash
-# Test server health
+# Test server health and modular architecture
 curl http://localhost:8888/health
 
-# Test AI agent capabilities
+# Test tool execution through modular adapters
+curl -X POST http://localhost:8888/api/tools/nmap \
+  -H "Content-Type: application/json" \
+  -d '{"target": "127.0.0.1", "scan_type": "-sn"}'
+
+# Test AI intelligence capabilities
 curl -X POST http://localhost:8888/api/intelligence/analyze-target \
   -H "Content-Type: application/json" \
   -d '{"target": "example.com", "analysis_type": "comprehensive"}'
