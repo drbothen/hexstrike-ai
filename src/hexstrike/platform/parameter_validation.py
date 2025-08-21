@@ -19,6 +19,12 @@ class ValidationResult:
     is_valid: bool
     error_message: str = ""
     sanitized_value: Any = None
+    field: str = ""
+    
+    @property
+    def message(self) -> str:
+        """Alias for error_message for compatibility"""
+        return self.error_message
 
 class ParameterValidator:
     """Validates and sanitizes tool parameters"""
@@ -221,5 +227,50 @@ class ParameterValidator:
                 is_valid=False,
                 error_message="Thread count must be a number"
             )
+    
+    def validate_tool_parameters(self, tool_name: str, params: Dict[str, Any]) -> List[ValidationResult]:
+        """Validate tool parameters based on tool requirements"""
+        errors = []
+        
+        if "target" in params:
+            target = params["target"]
+            if not target:
+                errors.append(ValidationResult(
+                    is_valid=False,
+                    error_message="Target parameter cannot be empty"
+                ))
+            else:
+                url_result = self.validate_url(target)
+                if not url_result.is_valid:
+                    ip_result = self.validate_ip_address(target)
+                    if not ip_result.is_valid:
+                        domain_result = self.validate_domain(target)
+                        if not domain_result.is_valid:
+                            errors.append(ValidationResult(
+                                is_valid=False,
+                                error_message="Target must be a valid URL, IP address, or domain name"
+                            ))
+        
+        if "timeout" in params:
+            timeout_result = self.validate_timeout(params["timeout"])
+            if not timeout_result.is_valid:
+                errors.append(timeout_result)
+        
+        if "threads" in params:
+            threads_result = self.validate_thread_count(params["threads"])
+            if not threads_result.is_valid:
+                errors.append(threads_result)
+        
+        if "ports" in params and params["ports"]:
+            ports_result = self.validate_port_range(params["ports"])
+            if not ports_result.is_valid:
+                errors.append(ports_result)
+        
+        if "wordlist" in params and params["wordlist"]:
+            wordlist_result = self.validate_wordlist_path(params["wordlist"])
+            if not wordlist_result.is_valid:
+                errors.append(wordlist_result)
+        
+        return [error for error in errors if not error.is_valid]
 
 validator = ParameterValidator()
