@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from hexstrike.platform.logging import configure_logging, LogConfig
 from hexstrike.platform.constants import API_HOST, API_PORT
-from hexstrike.interfaces.visual_engine import VisualEngine
+from hexstrike.interfaces.visual_engine import ModernVisualEngine
 
 log_config = LogConfig(
     level="INFO",
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 def main():
     """Main application entry point"""
     try:
-        print(VisualEngine.create_banner())
+        print(ModernVisualEngine.create_banner())
         
         logger.info("🚀 Starting HexStrike AI v6.0 - Modular Architecture")
         logger.info(f"🌐 API Server will be available at http://{API_HOST}:{API_PORT}")

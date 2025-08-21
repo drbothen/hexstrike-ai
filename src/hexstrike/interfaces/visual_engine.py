@@ -6,7 +6,8 @@ This module changes when visual output formatting requirements or color schemes 
 
 from typing import Dict, Any, Optional
 import time
-from ..platform.constants import API_HOST, API_PORT
+
+VisualEngine = None
 
 class ModernVisualEngine:
     """Beautiful, modern output formatting with animations and colors"""
@@ -76,224 +77,218 @@ class ModernVisualEngine:
         'pulse': ['●', '◐', '◑', '◒', '◓', '◔', '◕', '◖', '◗', '◘']
     }
     
-    @staticmethod</old_str>
-
-    
     @staticmethod
     def create_banner() -> str:
-        """Create application banner"""
-        banner_lines = [
-            f"{ModernVisualEngine.COLORS['PRIMARY_BORDER']}╔══════════════════════════════════════════════════════════════════════════════╗{ModernVisualEngine.COLORS['RESET']}",
-            f"{ModernVisualEngine.COLORS['PRIMARY_BORDER']}║{ModernVisualEngine.COLORS['RESET']}                                                                              {ModernVisualEngine.COLORS['PRIMARY_BORDER']}║{ModernVisualEngine.COLORS['RESET']}",
-            f"{ModernVisualEngine.COLORS['PRIMARY_BORDER']}║{ModernVisualEngine.COLORS['RESET']}  {ModernVisualEngine.COLORS['FIRE_RED']}██╗  ██╗███████╗██╗  ██╗███████╗████████╗██████╗ ██╗██╗  ██╗███████╗{ModernVisualEngine.COLORS['RESET']}  {ModernVisualEngine.COLORS['PRIMARY_BORDER']}║{ModernVisualEngine.COLORS['RESET']}",
-            f"{ModernVisualEngine.COLORS['PRIMARY_BORDER']}║{ModernVisualEngine.COLORS['RESET']}  {ModernVisualEngine.COLORS['FIRE_RED']}██║  ██║██╔════╝╚██╗██╔╝██╔════╝╚══██╔══╝██╔══██╗██║██║ ██╔╝██╔════╝{ModernVisualEngine.COLORS['RESET']}  {ModernVisualEngine.COLORS['PRIMARY_BORDER']}║{ModernVisualEngine.COLORS['RESET']}",
-            f"{ModernVisualEngine.COLORS['PRIMARY_BORDER']}║{ModernVisualEngine.COLORS['RESET']}  {ModernVisualEngine.COLORS['CYBER_ORANGE']}███████║█████╗   ╚███╔╝ ███████╗   ██║   ██████╔╝██║█████╔╝ █████╗{ModernVisualEngine.COLORS['RESET']}    {ModernVisualEngine.COLORS['PRIMARY_BORDER']}║{ModernVisualEngine.COLORS['RESET']}",
-            f"{ModernVisualEngine.COLORS['PRIMARY_BORDER']}║{ModernVisualEngine.COLORS['RESET']}  {ModernVisualEngine.COLORS['CYBER_ORANGE']}██╔══██║██╔══╝   ██╔██╗ ╚════██║   ██║   ██╔══██╗██║██╔═██╗ ██╔══╝{ModernVisualEngine.COLORS['RESET']}    {ModernVisualEngine.COLORS['PRIMARY_BORDER']}║{ModernVisualEngine.COLORS['RESET']}",
-            f"{ModernVisualEngine.COLORS['PRIMARY_BORDER']}║{ModernVisualEngine.COLORS['RESET']}  {ModernVisualEngine.COLORS['YELLOW_BRIGHT']}██║  ██║███████╗██╔╝ ██╗███████║   ██║   ██║  ██║██║██║  ██╗███████╗{ModernVisualEngine.COLORS['RESET']}  {ModernVisualEngine.COLORS['PRIMARY_BORDER']}║{ModernVisualEngine.COLORS['RESET']}",
-            f"{ModernVisualEngine.COLORS['PRIMARY_BORDER']}║{ModernVisualEngine.COLORS['RESET']}  {ModernVisualEngine.COLORS['YELLOW_BRIGHT']}╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝╚══════╝{ModernVisualEngine.COLORS['RESET']}  {ModernVisualEngine.COLORS['PRIMARY_BORDER']}║{ModernVisualEngine.COLORS['RESET']}",
-            f"{ModernVisualEngine.COLORS['PRIMARY_BORDER']}║{ModernVisualEngine.COLORS['RESET']}                                                                              {ModernVisualEngine.COLORS['PRIMARY_BORDER']}║{ModernVisualEngine.COLORS['RESET']}",
-            f"{ModernVisualEngine.COLORS['PRIMARY_BORDER']}║{ModernVisualEngine.COLORS['RESET']}           {ModernVisualEngine.COLORS['NEON_GREEN']}🚀 Advanced AI-Powered Penetration Testing Framework 🚀{ModernVisualEngine.COLORS['RESET']}           {ModernVisualEngine.COLORS['PRIMARY_BORDER']}║{ModernVisualEngine.COLORS['RESET']}",
-            f"{ModernVisualEngine.COLORS['PRIMARY_BORDER']}║{ModernVisualEngine.COLORS['RESET']}                                                                              {ModernVisualEngine.COLORS['PRIMARY_BORDER']}║{ModernVisualEngine.COLORS['RESET']}",
-            f"{ModernVisualEngine.COLORS['PRIMARY_BORDER']}║{ModernVisualEngine.COLORS['RESET']}  {ModernVisualEngine.COLORS['ELECTRIC_BLUE']}Version: 6.0.0{ModernVisualEngine.COLORS['RESET']}  {ModernVisualEngine.COLORS['GRAY_DARK']}|{ModernVisualEngine.COLORS['RESET']}  {ModernVisualEngine.COLORS['PURPLE_GLOW']}Bug Bounty{ModernVisualEngine.COLORS['RESET']}  {ModernVisualEngine.COLORS['GRAY_DARK']}|{ModernVisualEngine.COLORS['RESET']}  {ModernVisualEngine.COLORS['PURPLE_GLOW']}CTF{ModernVisualEngine.COLORS['RESET']}  {ModernVisualEngine.COLORS['GRAY_DARK']}|{ModernVisualEngine.COLORS['RESET']}  {ModernVisualEngine.COLORS['PURPLE_GLOW']}Red Team{ModernVisualEngine.COLORS['RESET']}  {ModernVisualEngine.COLORS['GRAY_DARK']}|{ModernVisualEngine.COLORS['RESET']}  {ModernVisualEngine.COLORS['PURPLE_GLOW']}Research{ModernVisualEngine.COLORS['RESET']}  {ModernVisualEngine.COLORS['PRIMARY_BORDER']}║{ModernVisualEngine.COLORS['RESET']}",
-            f"{ModernVisualEngine.COLORS['PRIMARY_BORDER']}║{ModernVisualEngine.COLORS['RESET']}                                                                              {ModernVisualEngine.COLORS['PRIMARY_BORDER']}║{ModernVisualEngine.COLORS['RESET']}",
-            f"{ModernVisualEngine.COLORS['PRIMARY_BORDER']}╚══════════════════════════════════════════════════════════════════════════════╝{ModernVisualEngine.COLORS['RESET']}"
-        ]
-        return "\n".join(banner_lines)
+        """Create the enhanced HexStrike banner"""
+        # Build a blood-red themed border using primary/gradient alternation
+        border_color = ModernVisualEngine.COLORS['PRIMARY_BORDER']
+        accent = ModernVisualEngine.COLORS['ACCENT_LINE']
+        gradient = ModernVisualEngine.COLORS['ACCENT_GRADIENT']
+        RESET = ModernVisualEngine.COLORS['RESET']
+        BOLD = ModernVisualEngine.COLORS['BOLD']
+        title_block = f"{accent}{BOLD}"
+        banner = f"""
+{title_block}
+██╗  ██╗███████╗██╗  ██╗███████╗████████╗██████╗ ██╗██╗  ██╗███████╗
+██║  ██║██╔════╝╚██╗██╔╝██╔════╝╚══██╔══╝██╔══██╗██║██║ ██╔╝██╔════╝
+███████║█████╗   ╚███╔╝ ███████╗   ██║   ██████╔╝██║█████╔╝ █████╗  
+██╔══██║██╔══╝   ██╔██╗ ╚════██║   ██║   ██╔══██╗██║██╔═██╗ ██╔══╝  
+██║  ██║███████╗██╔╝ ██╗███████║   ██║   ██║  ██║██║██║  ██╗███████╗
+╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝╚══════╝
+{RESET}
+{border_color}┌─────────────────────────────────────────────────────────────────────┐
+│  {ModernVisualEngine.COLORS['BRIGHT_WHITE']}🚀 HexStrike AI - Blood-Red Offensive Intelligence Core{border_color}        │
+│  {accent}⚡ AI-Automated Recon | Exploitation | Analysis Pipeline{border_color}          │
+│  {gradient}🎯 Bug Bounty | CTF | Red Team | Zero-Day Research{border_color}              │
+└─────────────────────────────────────────────────────────────────────┘{RESET}
+
+{ModernVisualEngine.COLORS['TERMINAL_GRAY']}[INFO] Server starting on 127.0.0.1:8888
+[INFO] 150+ integrated modules | Adaptive AI decision engine active
+[INFO] Blood-red theme engaged – unified offensive operations UI{RESET}
+"""
+        return banner
     
     @staticmethod
     def create_progress_bar(current: int, total: int, width: int = 50, tool: str = "") -> str:
-        """Create simple progress bar"""
+        """Create a beautiful progress bar with cyberpunk styling"""
         if total == 0:
             percentage = 0
         else:
-            percentage = (current / total) * 100
+            percentage = min(100, (current / total) * 100)
         
-        filled = int(width * current // total) if total > 0 else 0
-        bar = "█" * filled + "░" * (width - filled)
+        filled = int(width * percentage / 100)
+        bar = '█' * filled + '░' * (width - filled)
         
-        tool_info = f" [{tool}]" if tool else ""
-        return f"{ModernVisualEngine.COLORS['CYBER_ORANGE']}[{bar}]{ModernVisualEngine.COLORS['RESET']} {percentage:.1f}%{tool_info}"
-    
+        border = ModernVisualEngine.COLORS['PRIMARY_BORDER']
+        fill_col = ModernVisualEngine.COLORS['ACCENT_LINE']
+        return f"""
+{border}┌─ {tool} ─{'─' * (width - len(tool) - 4)}┐
+│ {fill_col}{bar}{border} │ {percentage:6.1f}%
+└─{'─' * (width + 10)}┘{ModernVisualEngine.COLORS['RESET']}"""
+
     @staticmethod
     def render_progress_bar(progress: float, width: int = 40, style: str = 'cyber', 
                           label: str = "", eta: float = 0, speed: str = "") -> str:
-        """Render advanced progress bar with cyber styling"""
-        percentage = max(0, min(100, progress * 100))
+        """Render a beautiful progress bar with multiple styles"""
+        
+        # Clamp progress between 0 and 1
+        progress = max(0.0, min(1.0, progress))
+        
+        # Calculate filled and empty portions
         filled_width = int(width * progress)
+        empty_width = width - filled_width
         
+        # Style-specific rendering
         if style == 'cyber':
-            filled_char = "█"
-            empty_char = "░"
-            color = ModernVisualEngine.COLORS['NEON_GREEN'] if progress >= 1.0 else ModernVisualEngine.COLORS['CYBER_ORANGE']
-        else:
-            filled_char = "="
-            empty_char = "-"
-            color = ModernVisualEngine.COLORS['SUCCESS'] if progress >= 1.0 else ModernVisualEngine.COLORS['INFO']
+            filled_char = '█'
+            empty_char = '░'
+            bar_color = ModernVisualEngine.COLORS['ACCENT_LINE']
+            progress_color = ModernVisualEngine.COLORS['PRIMARY_BORDER']
+        elif style == 'matrix':
+            filled_char = '▓'
+            empty_char = '▒'
+            bar_color = ModernVisualEngine.COLORS['ACCENT_LINE']
+            progress_color = ModernVisualEngine.COLORS['ACCENT_GRADIENT']
+        elif style == 'neon':
+            filled_char = '━'
+            empty_char = '─'
+            bar_color = ModernVisualEngine.COLORS['PRIMARY_BORDER']
+            progress_color = ModernVisualEngine.COLORS['CYBER_ORANGE']
+        else:  # default
+            filled_char = '█'
+            empty_char = '░'
+            bar_color = ModernVisualEngine.COLORS['ACCENT_LINE']
+            progress_color = ModernVisualEngine.COLORS['PRIMARY_BORDER']
         
-        bar = filled_char * filled_width + empty_char * (width - filled_width)
+        # Build the progress bar
+        filled_part = bar_color + filled_char * filled_width
+        empty_part = ModernVisualEngine.COLORS['TERMINAL_GRAY'] + empty_char * empty_width
+        percentage = f"{progress * 100:.1f}%"
         
-        progress_line = f"{color}[{bar}]{ModernVisualEngine.COLORS['RESET']} {percentage:.1f}%"
+        # Add ETA and speed if provided
+        extra_info = ""
+        if eta > 0:
+            extra_info += f" ETA: {eta:.1f}s"
+        if speed:
+            extra_info += f" Speed: {speed}"
+        
+        # Build final progress bar
+        bar_display = f"[{filled_part}{empty_part}{ModernVisualEngine.COLORS['RESET']}] {progress_color}{percentage}{ModernVisualEngine.COLORS['RESET']}"
         
         if label:
-            progress_line = f"{label}: {progress_line}"
-        
-        if eta > 0:
-            eta_str = f" ETA: {eta:.1f}s"
-            progress_line += eta_str
-        
-        if speed:
-            progress_line += f" ({speed})"
-        
-        return progress_line
-    
+            return f"{label}: {bar_display}{extra_info}"
+        else:
+            return f"{bar_display}{extra_info}"
+
     @staticmethod
     def create_live_dashboard(processes: Dict[int, Dict[str, Any]]) -> str:
-        """Create live process dashboard"""
-        if not processes:
-            return f"{ModernVisualEngine.COLORS['GRAY_DARK']}No active processes{ModernVisualEngine.COLORS['RESET']}"
+        """Create a live dashboard showing all active processes"""
         
-        lines = [
-            f"{ModernVisualEngine.COLORS['ELECTRIC_BLUE']}{'='*80}{ModernVisualEngine.COLORS['RESET']}",
-            f"{ModernVisualEngine.COLORS['ELECTRIC_BLUE']}🖥️  LIVE PROCESS DASHBOARD{ModernVisualEngine.COLORS['RESET']}",
-            f"{ModernVisualEngine.COLORS['ELECTRIC_BLUE']}{'='*80}{ModernVisualEngine.COLORS['RESET']}",
-            ""
+        if not processes:
+            return f"""
+{ModernVisualEngine.COLORS['PRIMARY_BORDER']}╭─────────────────────────────────────────────────────────────────────────────╮
+│ {ModernVisualEngine.COLORS['ACCENT_LINE']}📊 HEXSTRIKE LIVE DASHBOARD{ModernVisualEngine.COLORS['PRIMARY_BORDER']}                                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ {ModernVisualEngine.COLORS['TERMINAL_GRAY']}No active processes currently running{ModernVisualEngine.COLORS['PRIMARY_BORDER']}                                    │
+╰─────────────────────────────────────────────────────────────────────────────╯{ModernVisualEngine.COLORS['RESET']}
+"""
+        
+        dashboard_lines = [
+            f"{ModernVisualEngine.COLORS['PRIMARY_BORDER']}╭─────────────────────────────────────────────────────────────────────────────╮",
+            f"│ {ModernVisualEngine.COLORS['ACCENT_LINE']}📊 HEXSTRIKE LIVE DASHBOARD{ModernVisualEngine.COLORS['PRIMARY_BORDER']}                                           │",
+            f"├─────────────────────────────────────────────────────────────────────────────┤"
         ]
         
         for pid, proc_info in processes.items():
             status = proc_info.get('status', 'unknown')
             tool = proc_info.get('tool', 'unknown')
-            target = proc_info.get('target', 'unknown')
-            progress = proc_info.get('progress', 0.0)
+            target = proc_info.get('target', 'N/A')
             
-            status_color = {
-                'running': ModernVisualEngine.COLORS['TOOL_RUNNING'],
-                'completed': ModernVisualEngine.COLORS['TOOL_SUCCESS'],
-                'failed': ModernVisualEngine.COLORS['TOOL_ERROR'],
-                'paused': ModernVisualEngine.COLORS['TOOL_WARNING']
-            }.get(status, ModernVisualEngine.COLORS['GRAY_DARK'])
-            
-            lines.extend([
-                f"{ModernVisualEngine.COLORS['WHITE_BRIGHT']}PID {pid}:{ModernVisualEngine.COLORS['RESET']} {status_color}{status.upper()}{ModernVisualEngine.COLORS['RESET']}",
-                f"  Tool: {ModernVisualEngine.COLORS['CYBER_ORANGE']}{tool}{ModernVisualEngine.COLORS['RESET']}",
-                f"  Target: {ModernVisualEngine.COLORS['NEON_GREEN']}{target}{ModernVisualEngine.COLORS['RESET']}",
-                f"  Progress: {ModernVisualEngine.render_progress_bar(progress, width=30)}",
-                ""
-            ])
+            status_color = ModernVisualEngine.COLORS.get(f'TOOL_{status.upper()}', ModernVisualEngine.COLORS['INFO'])
+            dashboard_lines.append(
+                f"│ {status_color}PID {pid}: {tool} → {target[:30]}{ModernVisualEngine.COLORS['PRIMARY_BORDER']}{'.' * (40 - len(target[:30]))} │"
+            )
         
-        return "\n".join(lines)
-    
+        dashboard_lines.append(f"╰─────────────────────────────────────────────────────────────────────────────╯{ModernVisualEngine.COLORS['RESET']}")
+        
+        return '\n'.join(dashboard_lines)
+
     @staticmethod
-    def format_vulnerability_card(vuln_data: Dict[str, Any]) -> str:
-        """Format vulnerability information as card"""
-        severity = vuln_data.get('severity', 'unknown').lower()
-        title = vuln_data.get('title', 'Unknown Vulnerability')
-        description = vuln_data.get('description', 'No description available')
-        cvss = vuln_data.get('cvss', 'N/A')
+    def format_vulnerability_card(vuln: Dict[str, Any]) -> str:
+        """Format vulnerability information as a beautiful card"""
+        severity = vuln.get('severity', 'info').upper()
+        severity_color = ModernVisualEngine.COLORS.get(f'VULN_{severity}', ModernVisualEngine.COLORS['INFO'])
         
-        severity_colors = {
-            'critical': ModernVisualEngine.COLORS['CRITICAL'],
-            'high': ModernVisualEngine.COLORS['HIGH'],
-            'medium': ModernVisualEngine.COLORS['MEDIUM'],
-            'low': ModernVisualEngine.COLORS['LOW'],
-            'info': ModernVisualEngine.COLORS['INFO']
-        }
+        title = vuln.get('title', 'Unknown Vulnerability')
+        description = vuln.get('description', 'No description available')
+        cvss = vuln.get('cvss', 'N/A')
         
-        severity_color = severity_colors.get(severity, ModernVisualEngine.COLORS['UNKNOWN'])
-        
-        lines = [
-            f"{ModernVisualEngine.COLORS['PRIMARY_BORDER']}┌─ {severity_color}{severity.upper()}{ModernVisualEngine.COLORS['RESET']} {ModernVisualEngine.COLORS['PRIMARY_BORDER']}─────────────────────────────────────────────────────────────────┐{ModernVisualEngine.COLORS['RESET']}",
-            f"{ModernVisualEngine.COLORS['PRIMARY_BORDER']}│{ModernVisualEngine.COLORS['RESET']} {ModernVisualEngine.COLORS['WHITE_BRIGHT']}{title[:65]}{ModernVisualEngine.COLORS['RESET']}{' ' * max(0, 65 - len(title))} {ModernVisualEngine.COLORS['PRIMARY_BORDER']}│{ModernVisualEngine.COLORS['RESET']}",
-            f"{ModernVisualEngine.COLORS['PRIMARY_BORDER']}├─────────────────────────────────────────────────────────────────────┤{ModernVisualEngine.COLORS['RESET']}",
-            f"{ModernVisualEngine.COLORS['PRIMARY_BORDER']}│{ModernVisualEngine.COLORS['RESET']} {description[:65]}{' ' * max(0, 65 - len(description))} {ModernVisualEngine.COLORS['PRIMARY_BORDER']}│{ModernVisualEngine.COLORS['RESET']}",
-            f"{ModernVisualEngine.COLORS['PRIMARY_BORDER']}│{ModernVisualEngine.COLORS['RESET']} CVSS: {ModernVisualEngine.COLORS['YELLOW_BRIGHT']}{cvss}{ModernVisualEngine.COLORS['RESET']}{' ' * max(0, 58 - len(str(cvss)))} {ModernVisualEngine.COLORS['PRIMARY_BORDER']}│{ModernVisualEngine.COLORS['RESET']}",
-            f"{ModernVisualEngine.COLORS['PRIMARY_BORDER']}└─────────────────────────────────────────────────────────────────────┘{ModernVisualEngine.COLORS['RESET']}"
-        ]
-        
-        return "\n".join(lines)
-    
+        card = f"""
+{ModernVisualEngine.COLORS['PRIMARY_BORDER']}╭─ {severity_color}{severity} VULNERABILITY{ModernVisualEngine.COLORS['PRIMARY_BORDER']} ─{'─' * (50 - len(severity))}╮
+│ {ModernVisualEngine.COLORS['BRIGHT_WHITE']}{title[:70]}{ModernVisualEngine.COLORS['PRIMARY_BORDER']}{'.' * (70 - len(title[:70]))} │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ {ModernVisualEngine.COLORS['TERMINAL_GRAY']}{description[:70]}{ModernVisualEngine.COLORS['PRIMARY_BORDER']}{'.' * (70 - len(description[:70]))} │
+│ {ModernVisualEngine.COLORS['CYBER_ORANGE']}CVSS Score: {cvss}{ModernVisualEngine.COLORS['PRIMARY_BORDER']}{'.' * (60 - len(str(cvss)))} │
+╰─────────────────────────────────────────────────────────────────────────────╯{ModernVisualEngine.COLORS['RESET']}
+"""
+        return card
+
     @staticmethod
-    def format_error_card(error_type: str, tool_name: str, error_message: str, recovery_action: str = "") -> str:
-        """Format error information as card"""
-        lines = [
-            f"{ModernVisualEngine.COLORS['ERROR']}┌─ ERROR ─────────────────────────────────────────────────────────────────┐{ModernVisualEngine.COLORS['RESET']}",
-            f"{ModernVisualEngine.COLORS['ERROR']}│{ModernVisualEngine.COLORS['RESET']} Tool: {ModernVisualEngine.COLORS['CYBER_ORANGE']}{tool_name}{ModernVisualEngine.COLORS['RESET']}{' ' * max(0, 58 - len(tool_name))} {ModernVisualEngine.COLORS['ERROR']}│{ModernVisualEngine.COLORS['RESET']}",
-            f"{ModernVisualEngine.COLORS['ERROR']}│{ModernVisualEngine.COLORS['RESET']} Type: {ModernVisualEngine.COLORS['WARNING']}{error_type}{ModernVisualEngine.COLORS['RESET']}{' ' * max(0, 58 - len(error_type))} {ModernVisualEngine.COLORS['ERROR']}│{ModernVisualEngine.COLORS['RESET']}",
-            f"{ModernVisualEngine.COLORS['ERROR']}├─────────────────────────────────────────────────────────────────────┤{ModernVisualEngine.COLORS['RESET']}",
-            f"{ModernVisualEngine.COLORS['ERROR']}│{ModernVisualEngine.COLORS['RESET']} {error_message[:65]}{' ' * max(0, 65 - len(error_message))} {ModernVisualEngine.COLORS['ERROR']}│{ModernVisualEngine.COLORS['RESET']}"
-        ]
+    def format_error_card(error: str, context: str = "") -> str:
+        """Format error information as a beautiful card"""
         
-        if recovery_action:
-            lines.extend([
-                f"{ModernVisualEngine.COLORS['ERROR']}├─────────────────────────────────────────────────────────────────────┤{ModernVisualEngine.COLORS['RESET']}",
-                f"{ModernVisualEngine.COLORS['ERROR']}│{ModernVisualEngine.COLORS['RESET']} Recovery: {ModernVisualEngine.COLORS['INFO']}{recovery_action[:55]}{ModernVisualEngine.COLORS['RESET']}{' ' * max(0, 55 - len(recovery_action))} {ModernVisualEngine.COLORS['ERROR']}│{ModernVisualEngine.COLORS['RESET']}"
-            ])
+        card = f"""
+{ModernVisualEngine.COLORS['ERROR']}╭─ ERROR ─{'─' * 70}╮
+│ {ModernVisualEngine.COLORS['BRIGHT_WHITE']}{error[:70]}{ModernVisualEngine.COLORS['ERROR']}{'.' * (70 - len(error[:70]))} │"""
         
-        lines.append(f"{ModernVisualEngine.COLORS['ERROR']}└─────────────────────────────────────────────────────────────────────┘{ModernVisualEngine.COLORS['RESET']}")
+        if context:
+            card += f"""
+├─────────────────────────────────────────────────────────────────────────────┤
+│ {ModernVisualEngine.COLORS['TERMINAL_GRAY']}{context[:70]}{ModernVisualEngine.COLORS['ERROR']}{'.' * (70 - len(context[:70]))} │"""
         
-        return "\n".join(lines)
-    
+        card += f"""
+╰─────────────────────────────────────────────────────────────────────────────╯{ModernVisualEngine.COLORS['RESET']}
+"""
+        return card
+
     @staticmethod
-    def format_tool_status(tool_name: str, status: str, target: str = "", progress: float = 0.0) -> str:
-        """Format tool execution status with enhanced highlighting"""
-        status_colors = {
-            'RUNNING': ModernVisualEngine.COLORS['TOOL_RUNNING'],
-            'SUCCESS': ModernVisualEngine.COLORS['TOOL_SUCCESS'],
-            'ERROR': ModernVisualEngine.COLORS['TOOL_ERROR'],
-            'WARNING': ModernVisualEngine.COLORS['TOOL_WARNING']
-        }
+    def format_tool_status(tool: str, status: str, details: str = "") -> str:
+        """Format tool execution status with beautiful styling"""
+        status_color = ModernVisualEngine.COLORS.get(f'TOOL_{status.upper()}', ModernVisualEngine.COLORS['INFO'])
         
-        status_color = status_colors.get(status.upper(), ModernVisualEngine.COLORS['GRAY_DARK'])
+        status_line = f"{status_color}[{status.upper()}]{ModernVisualEngine.COLORS['RESET']} {ModernVisualEngine.COLORS['BRIGHT_WHITE']}{tool}{ModernVisualEngine.COLORS['RESET']}"
         
-        status_line = f"{ModernVisualEngine.COLORS['CYBER_ORANGE']}[{tool_name}]{ModernVisualEngine.COLORS['RESET']} {status_color}{status}{ModernVisualEngine.COLORS['RESET']}"
-        
-        if target:
-            status_line += f" → {ModernVisualEngine.COLORS['NEON_GREEN']}{target}{ModernVisualEngine.COLORS['RESET']}"
-        
-        if progress > 0:
-            progress_bar = ModernVisualEngine.render_progress_bar(progress, width=20)
-            status_line += f" {progress_bar}"
+        if details:
+            status_line += f" - {ModernVisualEngine.COLORS['TERMINAL_GRAY']}{details}{ModernVisualEngine.COLORS['RESET']}"
         
         return status_line
-    
+
     @staticmethod
-    def format_highlighted_text(text: str, highlight_color: str = None) -> str:
+    def format_highlighted_text(text: str, highlight_type: str = 'red') -> str:
         """Format text with highlighting"""
-        if highlight_color is None:
-            highlight_color = ModernVisualEngine.COLORS['YELLOW_BRIGHT']
-        
+        highlight_color = ModernVisualEngine.COLORS.get(f'HIGHLIGHT_{highlight_type.upper()}', ModernVisualEngine.COLORS['HIGHLIGHT_RED'])
         return f"{highlight_color}{text}{ModernVisualEngine.COLORS['RESET']}"
-    
+
     @staticmethod
     def format_vulnerability_severity(severity: str) -> str:
         """Format vulnerability severity with appropriate colors"""
-        severity_lower = severity.lower()
-        severity_colors = {
-            'critical': ModernVisualEngine.COLORS['CRITICAL'],
-            'high': ModernVisualEngine.COLORS['HIGH'],
-            'medium': ModernVisualEngine.COLORS['MEDIUM'],
-            'low': ModernVisualEngine.COLORS['LOW'],
-            'info': ModernVisualEngine.COLORS['INFO']
-        }
+        severity_upper = severity.upper()
+        color = ModernVisualEngine.COLORS.get(f'VULN_{severity_upper}', ModernVisualEngine.COLORS['INFO'])
         
-        color = severity_colors.get(severity_lower, ModernVisualEngine.COLORS['UNKNOWN'])
-        return f"{color}{severity.upper()}{ModernVisualEngine.COLORS['RESET']}"
-    
+        if severity_upper == 'CRITICAL':
+            return f"{color} ⚠️  CRITICAL {ModernVisualEngine.COLORS['RESET']}"
+        elif severity_upper == 'HIGH':
+            return f"{color} 🔴 HIGH {ModernVisualEngine.COLORS['RESET']}"
+        elif severity_upper == 'MEDIUM':
+            return f"{color} 🟡 MEDIUM {ModernVisualEngine.COLORS['RESET']}"
+        elif severity_upper == 'LOW':
+            return f"{color} 🟢 LOW {ModernVisualEngine.COLORS['RESET']}"
+        else:
+            return f"{color} ℹ️  INFO {ModernVisualEngine.COLORS['RESET']}"
+
     @staticmethod
     def create_section_header(title: str) -> str:
-        """Create section header with styling"""
-        return f"\n{ModernVisualEngine.COLORS['ELECTRIC_BLUE']}{'='*60}{ModernVisualEngine.COLORS['RESET']}\n{ModernVisualEngine.COLORS['WHITE_BRIGHT']}{title}{ModernVisualEngine.COLORS['RESET']}\n{ModernVisualEngine.COLORS['ELECTRIC_BLUE']}{'='*60}{ModernVisualEngine.COLORS['RESET']}\n"
-    
-    @staticmethod
-    def format_command_execution(command: str, status: str = "running") -> str:
-        """Format command execution display"""
-        status_colors = {
-            'running': ModernVisualEngine.COLORS['TOOL_RUNNING'],
-            'completed': ModernVisualEngine.COLORS['TOOL_SUCCESS'],
-            'failed': ModernVisualEngine.COLORS['TOOL_ERROR']
-        }
-        
-        status_color = status_colors.get(status, ModernVisualEngine.COLORS['GRAY_DARK'])
-        
-        return f"{ModernVisualEngine.COLORS['GRAY_DARK']}${ModernVisualEngine.COLORS['RESET']} {ModernVisualEngine.COLORS['WHITE_BRIGHT']}{command}{ModernVisualEngine.COLORS['RESET']} {status_color}[{status.upper()}]{ModernVisualEngine.COLORS['RESET']}"
+        """Create a beautiful section header"""
+        return f"\n{ModernVisualEngine.COLORS['PRIMARY_BORDER']}{'═' * 80}\n{ModernVisualEngine.COLORS['ACCENT_LINE']}  {title}\n{ModernVisualEngine.COLORS['PRIMARY_BORDER']}{'═' * 80}{ModernVisualEngine.COLORS['RESET']}\n"
 
 VisualEngine = ModernVisualEngine

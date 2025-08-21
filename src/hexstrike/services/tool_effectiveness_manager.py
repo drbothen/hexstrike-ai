@@ -218,3 +218,10 @@ class ToolEffectivenessManager:
             "most_updated_tools": sorted(tool_update_counts.items(), key=lambda x: x[1], reverse=True)[:10],
             "learning_enabled": self.learning_enabled
         }
+    
+    def optimize_parameters(self, tool_name: str, target_profile: Any) -> Dict[str, Any]:
+        """Optimize tool parameters based on target profile and context"""
+        from .tool_parameter_optimizer import ToolParameterOptimizer
+        
+        optimizer = ToolParameterOptimizer()
+        return optimizer.optimize_parameters(tool_name, target_profile)

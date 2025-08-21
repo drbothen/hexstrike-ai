@@ -17,7 +17,7 @@ class VulnIntelEndpoints:
     
     def __init__(self):
         self.cve_database = {}
-        self.threat_feeds = []
+        self.threat_feed_sources = []
         self.exploit_templates = {}
     
     def cve_monitor(self) -> Dict[str, Any]:

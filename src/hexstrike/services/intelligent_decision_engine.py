@@ -146,106 +146,10 @@ class IntelligentDecisionEngine:
     
     def analyze_target(self, target: str) -> TargetProfile:
         """Analyze target and create comprehensive profile"""
-        target_type = self._determine_target_type(target)
-        technologies = self._detect_technologies(target)
-        attack_surface = self._calculate_attack_surface(target, target_type)
-        risk_level = self._determine_risk_level(attack_surface)
-        confidence = self._calculate_confidence(target, target_type, technologies)
+        from .target_analyzer import TargetAnalyzer
         
-        return TargetProfile(
-            target=target,
-            target_type=target_type,
-            technologies=technologies,
-            attack_surface=attack_surface,
-            risk_level=risk_level,
-            confidence=confidence
-        )
-    
-    def _determine_target_type(self, target: str) -> TargetType:
-        """Determine the type of target"""
-        if target.startswith(('http://', 'https://')):
-            return TargetType.WEB_APPLICATION
-        elif '/' in target and not target.startswith(('http://', 'https://')):
-            return TargetType.API_ENDPOINT
-        elif any(cloud in target.lower() for cloud in ['aws', 'azure', 'gcp', 'cloud']):
-            return TargetType.CLOUD_SERVICE
-        else:
-            return TargetType.NETWORK_HOST
-    
-    def _resolve_domain(self, target: str) -> Optional[str]:
-        """Resolve domain to IP address"""
-        try:
-            import socket
-            return socket.gethostbyname(target)
-        except:
-            return None
-    
-    def _detect_technologies(self, target: str) -> List[str]:
-        """Detect technologies used by target"""
-        detected = []
-        
-        for tech, signatures in self.technology_signatures.items():
-            if any(sig.lower() in target.lower() for sig in signatures):
-                detected.append(tech)
-        
-        return detected
-    
-    def _detect_cms(self, target: str) -> Optional[str]:
-        """Detect CMS type"""
-        cms_indicators = {
-            'wordpress': ['wp-content', 'wp-admin'],
-            'drupal': ['sites/default', 'misc/drupal.js'],
-            'joomla': ['administrator/', 'components/']
-        }
-        
-        for cms, indicators in cms_indicators.items():
-            if any(indicator in target.lower() for indicator in indicators):
-                return cms
-        
-        return None
-    
-    def _calculate_attack_surface(self, target: str, target_type: TargetType) -> Dict[str, Any]:
-        """Calculate attack surface metrics"""
-        return {
-            "complexity": "medium",
-            "exposure": "high" if target_type == TargetType.WEB_APPLICATION else "medium",
-            "potential_vectors": self._get_potential_vectors(target_type),
-            "estimated_endpoints": 10 if target_type == TargetType.WEB_APPLICATION else 5
-        }
-    
-    def _get_potential_vectors(self, target_type: TargetType) -> List[str]:
-        """Get potential attack vectors for target type"""
-        vectors = {
-            TargetType.WEB_APPLICATION: ["sqli", "xss", "csrf", "lfi", "rfi", "ssrf"],
-            TargetType.NETWORK_HOST: ["service_exploit", "credential_attack", "privilege_escalation"],
-            TargetType.API_ENDPOINT: ["parameter_pollution", "injection", "broken_auth"],
-            TargetType.CLOUD_SERVICE: ["misconfiguration", "privilege_escalation", "data_exposure"]
-        }
-        return vectors.get(target_type, [])
-    
-    def _determine_risk_level(self, attack_surface: Dict[str, Any]) -> str:
-        """Determine risk level based on attack surface"""
-        complexity = attack_surface.get("complexity", "medium")
-        exposure = attack_surface.get("exposure", "medium")
-        
-        if exposure == "high" and complexity == "low":
-            return "high"
-        elif exposure == "high" or complexity == "high":
-            return "medium"
-        else:
-            return "low"
-    
-    def _calculate_confidence(self, target: str, target_type: TargetType, technologies: List[str]) -> float:
-        """Calculate confidence in analysis"""
-        base_confidence = 0.7
-        
-        if technologies:
-            base_confidence += 0.2
-        
-        if target_type != TargetType.NETWORK_HOST:
-            base_confidence += 0.1
-        
-        return min(1.0, base_confidence)
+        analyzer = TargetAnalyzer()
+        return analyzer.analyze_target(target)
     
     def select_optimal_tools(self, target_profile: TargetProfile, objective: str = "comprehensive") -> List[str]:
         """Select optimal tools based on target profile and objective"""
@@ -270,103 +174,19 @@ class IntelligentDecisionEngine:
     
     def optimize_parameters(self, tool_name: str, target_profile: TargetProfile) -> Dict[str, Any]:
         """Optimize tool parameters based on target profile and context"""
-        base_params = {"target": target_profile.target}
+        from .tool_effectiveness_manager import ToolEffectivenessManager
         
         if not self._use_advanced_optimizer:
-            return base_params
+            return {"target": target_profile.target}
         
-        optimization_methods = {
-            "nmap": self._optimize_nmap_params,
-            "gobuster": self._optimize_gobuster_params,
-            "nuclei": self._optimize_nuclei_params,
-            "sqlmap": self._optimize_sqlmap_params,
-            "ffuf": self._optimize_ffuf_params,
-            "hydra": self._optimize_hydra_params
-        }
-        
-        optimizer = optimization_methods.get(tool_name)
-        if optimizer:
-            optimized = optimizer(target_profile)
-            base_params.update(optimized)
-        
-        return base_params
+        tool_manager = ToolEffectivenessManager()
+        return tool_manager.optimize_parameters(tool_name, target_profile)
     
     def enable_advanced_optimization(self):
         self._use_advanced_optimizer = True
     
     def disable_advanced_optimization(self):
         self._use_advanced_optimizer = False
-    
-    def _optimize_nmap_params(self, target_profile: TargetProfile) -> Dict[str, Any]:
-        """Optimize Nmap parameters"""
-        params = {}
-        
-        if target_profile.target_type == TargetType.WEB_APPLICATION:
-            params["scan_type"] = "-sS -sV"
-            params["ports"] = "80,443,8080,8443"
-        else:
-            params["scan_type"] = "-sS -sV -sC"
-            params["ports"] = "1-1000"
-        
-        return params
-    
-    def _optimize_gobuster_params(self, target_profile: TargetProfile) -> Dict[str, Any]:
-        """Optimize Gobuster parameters"""
-        params = {
-            "mode": "dir",
-            "threads": 50,
-            "extensions": "php,html,txt,js"
-        }
-        
-        if "wordpress" in target_profile.technologies:
-            params["wordlist"] = "/usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt"
-            params["extensions"] = "php"
-        
-        return params
-    
-    def _optimize_nuclei_params(self, target_profile: TargetProfile) -> Dict[str, Any]:
-        """Optimize Nuclei parameters"""
-        params = {
-            "templates": "cves,vulnerabilities",
-            "severity": "medium,high,critical"
-        }
-        
-        if target_profile.technologies:
-            tech_templates = []
-            for tech in target_profile.technologies:
-                if tech in ["wordpress", "drupal", "joomla"]:
-                    tech_templates.append(tech)
-            
-            if tech_templates:
-                params["templates"] = ",".join(tech_templates)
-        
-        return params
-    
-    def _optimize_sqlmap_params(self, target_profile: TargetProfile) -> Dict[str, Any]:
-        """Optimize SQLMap parameters"""
-        return {
-            "level": 3,
-            "risk": 2,
-            "batch": True,
-            "random_agent": True
-        }
-    
-    def _optimize_ffuf_params(self, target_profile: TargetProfile) -> Dict[str, Any]:
-        """Optimize FFuf parameters"""
-        return {
-            "threads": 40,
-            "rate": 100,
-            "timeout": 10,
-            "follow_redirects": True
-        }
-    
-    def _optimize_hydra_params(self, target_profile: TargetProfile) -> Dict[str, Any]:
-        """Optimize Hydra parameters"""
-        return {
-            "threads": 16,
-            "timeout": 30,
-            "exit_on_first": True
-        }
     
     def create_attack_chain(self, target_profile: TargetProfile, objective: str = "comprehensive") -> AttackChain:
         """Create an intelligent attack chain based on target profile"""

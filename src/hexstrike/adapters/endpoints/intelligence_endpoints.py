@@ -236,4 +236,3 @@ class IntelligenceEndpoints:
         except Exception as e:
             logger.error(f"💥 Error getting effectiveness stats: {str(e)}")
             return jsonify({"error": f"Server error: {str(e)}"}), 500
-</new_str>
