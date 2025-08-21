@@ -52,6 +52,13 @@ from flask import Flask, request, jsonify, render_template_string, send_file
 from flask_cors import CORS
 from urllib.parse import urljoin, urlparse, parse_qs
 from bs4 import BeautifulSoup
+import argparse
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException, WebDriverException
 
 # Import modular components
 try:
