@@ -5,6 +5,24 @@ This module changes when hunting strategies change.
 """
 
 from typing import Dict, List
+from enum import Enum
+
+class VulnerabilityType(Enum):
+    """Enumeration of vulnerability types for bug bounty hunting"""
+    RCE = "rce"
+    SQLI = "sqli"
+    XSS_STORED = "xss_stored"
+    XSS_REFLECTED = "xss_reflected"
+    AUTH_BYPASS = "auth_bypass"
+    PRIVILEGE_ESCALATION = "privilege_escalation"
+    CSRF = "csrf"
+    IDOR = "idor"
+    FILE_UPLOAD = "file_upload"
+    INFO_DISCLOSURE = "info_disclosure"
+    SUBDOMAIN_TAKEOVER = "subdomain_takeover"
+    CLICKJACKING = "clickjacking"
+    MISSING_HEADERS = "missing_headers"
+    WEAK_SSL = "weak_ssl"
 
 class BugBountyStrategies:
     """Bug bounty hunting strategies and tool configurations"""

@@ -244,50 +244,43 @@ class BugBountyWorkflowManager:
     
     def suggest_next_steps(self, current_findings: Dict[str, Any]) -> List[str]:
         """Suggest next steps based on current findings"""
+        from .bugbounty_patterns import BugBountyPatterns
+        
         suggestions = []
+        thresholds = BugBountyPatterns.get_next_step_thresholds()
+        suggestion_messages = BugBountyPatterns.get_next_step_suggestions()
         
-        if current_findings.get("subdomains_found", 0) > 50:
-            suggestions.append("Large attack surface detected - consider automated scanning")
-        
-        if current_findings.get("js_files_found", 0) > 10:
-            suggestions.append("Many JS files found - analyze for API endpoints and secrets")
-        
-        if current_findings.get("parameters_found", 0) > 20:
-            suggestions.append("Many parameters discovered - focus on injection testing")
-        
-        if current_findings.get("admin_panels_found", 0) > 0:
-            suggestions.append("Admin panels discovered - test for authentication bypass")
-        
-        if current_findings.get("api_endpoints_found", 0) > 5:
-            suggestions.append("API endpoints found - test for IDOR and injection vulnerabilities")
+        for key, threshold in thresholds.items():
+            if current_findings.get(key, 0) > threshold:
+                suggestions.append(suggestion_messages[key])
         
         return suggestions
     
     def estimate_bounty_potential(self, target: BugBountyTarget, workflow_results: Dict[str, Any]) -> Dict[str, Any]:
         """Estimate bounty potential based on target and findings"""
-        base_multiplier = 1.0
+        from .bugbounty_patterns import BugBountyPatterns
         
-        if target.program_type == "web":
-            base_multiplier = 1.0
-        elif target.program_type == "api":
-            base_multiplier = 1.2
-        elif target.program_type == "mobile":
-            base_multiplier = 1.1
+        program_multipliers = BugBountyPatterns.get_bounty_multipliers()
+        surface_multipliers = BugBountyPatterns.get_attack_surface_multipliers()
+        base_amounts = BugBountyPatterns.get_bounty_base_amounts()
         
+        base_multiplier = program_multipliers.get(target.program_type, 1.0)
+        
+        # Apply attack surface multiplier
         attack_surface = workflow_results.get("subdomains_found", 0)
         if attack_surface > 100:
-            base_multiplier *= 1.3
+            base_multiplier *= surface_multipliers["large"]
         elif attack_surface > 50:
-            base_multiplier *= 1.1
+            base_multiplier *= surface_multipliers["medium"]
         
         vulnerability_count = workflow_results.get("vulnerabilities_found", 0)
         high_impact_vulns = workflow_results.get("high_impact_vulns", 0)
         
         estimated_bounty = {
-            "low": int(100 * base_multiplier),
-            "medium": int(500 * base_multiplier),
-            "high": int(2000 * base_multiplier * (1 + high_impact_vulns * 0.5)),
-            "critical": int(10000 * base_multiplier * (1 + high_impact_vulns))
+            "low": int(base_amounts["low"] * base_multiplier),
+            "medium": int(base_amounts["medium"] * base_multiplier),
+            "high": int(base_amounts["high"] * base_multiplier * (1 + high_impact_vulns * 0.5)),
+            "critical": int(base_amounts["critical"] * base_multiplier * (1 + high_impact_vulns))
         }
         
         return {

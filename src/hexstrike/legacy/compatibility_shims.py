@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional
 from ..services.decision_service import DecisionService
 from ..services.tool_execution_service import ToolExecutionService
 from ..services.process_service import ProcessService
-from ..interfaces.visual_engine import VisualEngine
+from ..interfaces.visual_engine import ModernVisualEngine as VisualEngine
 from ..platform.errors import ErrorHandler, ErrorType, RecoveryAction
 from ..domain.target_analysis import TargetProfile, TargetType, TechnologyStack
 

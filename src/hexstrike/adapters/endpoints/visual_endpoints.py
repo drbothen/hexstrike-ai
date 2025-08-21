@@ -213,4 +213,3 @@ class VisualEndpoints:
         except Exception as e:
             logger.error(f"💥 Error creating banner: {str(e)}")
             return jsonify({"error": f"Server error: {str(e)}"}), 500
-</new_str>

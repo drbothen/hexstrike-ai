@@ -7,324 +7,231 @@ This module changes when new security tools are added or tool APIs change.
 from typing import Dict, Any
 from flask import request, jsonify
 import logging
-from ...services.tool_execution_service import ToolExecutionService
+from .comprehensive_tool_endpoints_web import ComprehensiveWebToolEndpoints
+from .comprehensive_tool_endpoints_network import ComprehensiveNetworkToolEndpoints
+from .comprehensive_tool_endpoints_exploit import ComprehensiveExploitToolEndpoints
+from .comprehensive_tool_endpoints_cloud import ComprehensiveCloudToolEndpoints
 
 logger = logging.getLogger(__name__)
 
 class ComprehensiveToolEndpoints:
-    """Comprehensive endpoint handlers for all security tools"""
+    """Comprehensive endpoint handlers that delegates to specialized handlers"""
     
     def __init__(self):
-        self.execution_service = ToolExecutionService()
-    
-    def _execute_tool_endpoint(self, tool_name: str) -> Dict[str, Any]:
-        """Generic tool execution endpoint handler"""
-        try:
-            data = request.get_json()
-            if not data:
-                return jsonify({"error": "Request body must contain valid JSON"}), 400
-            
-            result = self.execution_service.execute_tool(tool_name, data)
-            
-            if result.get("success"):
-                return jsonify({
-                    "success": True,
-                    "tool": tool_name,
-                    "output": result.get("output", ""),
-                    "execution_time": result.get("execution_time", 0),
-                    "command": result.get("command", "")
-                })
-            else:
-                return jsonify({
-                    "success": False,
-                    "error": result.get("error", "Tool execution failed"),
-                    "tool": tool_name
-                }), 500
-                
-        except Exception as e:
-            logger.error(f"💥 Error in {tool_name} endpoint: {str(e)}")
-            return jsonify({"error": f"Server error: {str(e)}"}), 500
+        self.web_tools = ComprehensiveWebToolEndpoints()
+        self.network_tools = ComprehensiveNetworkToolEndpoints()
+        self.exploit_tools = ComprehensiveExploitToolEndpoints()
+        self.cloud_tools = ComprehensiveCloudToolEndpoints()
     
     def nmap(self):
-        """Execute nmap scan"""
-        return self._execute_tool_endpoint("nmap")
+        return self.network_tools.nmap()
     
     def rustscan(self):
-        """Execute rustscan"""
-        return self._execute_tool_endpoint("rustscan")
+        return self.network_tools.rustscan()
     
     def masscan(self):
-        """Execute masscan"""
-        return self._execute_tool_endpoint("masscan")
+        return self.network_tools.masscan()
     
     def naabu(self):
-        """Execute naabu port scanner"""
-        return self._execute_tool_endpoint("naabu")
+        return self.network_tools.naabu()
     
     def gobuster(self):
-        """Execute gobuster directory brute force"""
-        return self._execute_tool_endpoint("gobuster")
+        return self.web_tools.gobuster()
     
     def dirsearch(self):
-        """Execute dirsearch"""
-        return self._execute_tool_endpoint("dirsearch")
+        return self.web_tools.dirsearch()
     
     def feroxbuster(self):
-        """Execute feroxbuster"""
-        return self._execute_tool_endpoint("feroxbuster")
+        return self.web_tools.feroxbuster()
     
     def ffuf(self):
-        """Execute ffuf fuzzer"""
-        return self._execute_tool_endpoint("ffuf")
+        return self.web_tools.ffuf()
     
     def nuclei(self):
-        """Execute nuclei vulnerability scanner"""
-        return self._execute_tool_endpoint("nuclei")
+        return self.web_tools.nuclei()
     
     def nikto(self):
-        """Execute nikto web scanner"""
-        return self._execute_tool_endpoint("nikto")
+        return self.web_tools.nikto()
     
     def sqlmap(self):
-        """Execute sqlmap SQL injection tool"""
-        return self._execute_tool_endpoint("sqlmap")
+        return self.web_tools.sqlmap()
     
     def dalfox(self):
-        """Execute dalfox XSS scanner"""
-        return self._execute_tool_endpoint("dalfox")
+        return self.web_tools.dalfox()
     
     def httpx(self):
-        """Execute httpx HTTP toolkit"""
-        return self._execute_tool_endpoint("httpx")
+        return self.web_tools.httpx()
     
     def katana(self):
-        """Execute katana web crawler"""
-        return self._execute_tool_endpoint("katana")
+        return self.web_tools.katana()
     
     def gau(self):
-        """Execute gau URL fetcher"""
-        return self._execute_tool_endpoint("gau")
+        return self.web_tools.gau()
     
     def waybackurls(self):
-        """Execute waybackurls"""
-        return self._execute_tool_endpoint("waybackurls")
+        return self.web_tools.waybackurls()
     
     def arjun(self):
-        """Execute arjun parameter discovery"""
-        return self._execute_tool_endpoint("arjun")
+        return self.web_tools.arjun()
     
     def paramspider(self):
-        """Execute paramspider"""
-        return self._execute_tool_endpoint("paramspider")
+        return self.web_tools.paramspider()
     
     def prowler(self):
-        """Execute prowler AWS security assessment"""
-        return self._execute_tool_endpoint("prowler")
+        return self.cloud_tools.prowler()
     
     def scout_suite(self):
-        """Execute scout-suite multi-cloud assessment"""
-        return self._execute_tool_endpoint("scout-suite")
+        return self.cloud_tools.scout_suite()
     
     def trivy(self):
-        """Execute trivy container scanner"""
-        return self._execute_tool_endpoint("trivy")
+        return self.cloud_tools.trivy()
     
     def checkov(self):
-        """Execute checkov IaC scanner"""
-        return self._execute_tool_endpoint("checkov")
+        return self.cloud_tools.checkov()
     
     def terrascan(self):
-        """Execute terrascan"""
-        return self._execute_tool_endpoint("terrascan")
+        return self.cloud_tools.terrascan()
     
     def kube_hunter(self):
-        """Execute kube-hunter"""
-        return self._execute_tool_endpoint("kube-hunter")
+        return self.cloud_tools.kube_hunter()
     
     def kube_bench(self):
-        """Execute kube-bench"""
-        return self._execute_tool_endpoint("kube-bench")
+        return self.cloud_tools.kube_bench()
     
     def docker_bench_security(self):
-        """Execute docker-bench-security"""
-        return self._execute_tool_endpoint("docker-bench-security")
+        return self.cloud_tools.docker_bench_security()
     
     def clair(self):
-        """Execute clair container scanner"""
-        return self._execute_tool_endpoint("clair")
+        return self.cloud_tools.clair()
     
     def falco(self):
-        """Execute falco runtime security"""
-        return self._execute_tool_endpoint("falco")
+        return self.cloud_tools.falco()
     
     def hashcat(self):
-        """Execute hashcat password cracker"""
-        return self._execute_tool_endpoint("hashcat")
+        return self.exploit_tools.hashcat()
     
     def john(self):
-        """Execute john the ripper"""
-        return self._execute_tool_endpoint("john")
+        return self.exploit_tools.john()
     
     def hydra(self):
-        """Execute hydra brute force tool"""
-        return self._execute_tool_endpoint("hydra")
+        return self.exploit_tools.hydra()
     
     def medusa(self):
-        """Execute medusa brute force tool"""
-        return self._execute_tool_endpoint("medusa")
+        return self.exploit_tools.medusa()
     
     def amass(self):
-        """Execute amass subdomain enumeration"""
-        return self._execute_tool_endpoint("amass")
+        return self.network_tools.amass()
     
     def subfinder(self):
-        """Execute subfinder"""
-        return self._execute_tool_endpoint("subfinder")
+        return self.network_tools.subfinder()
     
     def assetfinder(self):
-        """Execute assetfinder"""
-        return self._execute_tool_endpoint("assetfinder")
+        return self.network_tools.assetfinder()
     
     def findomain(self):
-        """Execute findomain"""
-        return self._execute_tool_endpoint("findomain")
+        return self.network_tools.findomain()
     
     def shodan(self):
-        """Execute shodan search"""
-        return self._execute_tool_endpoint("shodan")
+        return self.network_tools.shodan()
     
     def censys(self):
-        """Execute censys search"""
-        return self._execute_tool_endpoint("censys")
+        return self.network_tools.censys()
     
     def ghidra(self):
-        """Execute ghidra analysis"""
-        return self._execute_tool_endpoint("ghidra")
+        return self.exploit_tools.ghidra()
     
     def radare2(self):
-        """Execute radare2"""
-        return self._execute_tool_endpoint("radare2")
+        return self.exploit_tools.radare2()
     
     def binwalk(self):
-        """Execute binwalk"""
-        return self._execute_tool_endpoint("binwalk")
+        return self.exploit_tools.binwalk()
     
     def strings(self):
-        """Execute strings utility"""
-        return self._execute_tool_endpoint("strings")
+        return self.exploit_tools.strings()
     
     def objdump(self):
-        """Execute objdump"""
-        return self._execute_tool_endpoint("objdump")
+        return self.exploit_tools.objdump()
     
     def gdb(self):
-        """Execute gdb debugger"""
-        return self._execute_tool_endpoint("gdb")
+        return self.exploit_tools.gdb()
     
     def metasploit(self):
-        """Execute metasploit"""
-        return self._execute_tool_endpoint("metasploit")
+        return self.exploit_tools.metasploit()
     
     def searchsploit(self):
-        """Execute searchsploit"""
-        return self._execute_tool_endpoint("searchsploit")
+        return self.exploit_tools.searchsploit()
     
     def exploit_db(self):
-        """Execute exploit-db search"""
-        return self._execute_tool_endpoint("exploit-db")
+        return self.exploit_tools.exploit_db()
     
     def wireshark(self):
-        """Execute wireshark/tshark"""
-        return self._execute_tool_endpoint("wireshark")
+        return self.network_tools.wireshark()
     
     def tcpdump(self):
-        """Execute tcpdump"""
-        return self._execute_tool_endpoint("tcpdump")
+        return self.network_tools.tcpdump()
     
     def ngrep(self):
-        """Execute ngrep"""
-        return self._execute_tool_endpoint("ngrep")
+        return self.network_tools.ngrep()
     
     def aircrack_ng(self):
-        """Execute aircrack-ng"""
-        return self._execute_tool_endpoint("aircrack-ng")
+        return self.network_tools.aircrack_ng()
     
     def reaver(self):
-        """Execute reaver WPS attack"""
-        return self._execute_tool_endpoint("reaver")
+        return self.network_tools.reaver()
     
     def kismet(self):
-        """Execute kismet wireless detector"""
-        return self._execute_tool_endpoint("kismet")
+        return self.network_tools.kismet()
     
     def setoolkit(self):
-        """Execute social engineering toolkit"""
-        return self._execute_tool_endpoint("setoolkit")
+        return self.exploit_tools.setoolkit()
     
     def gophish(self):
-        """Execute gophish phishing framework"""
-        return self._execute_tool_endpoint("gophish")
+        return self.exploit_tools.gophish()
     
     def mobsf(self):
-        """Execute mobile security framework"""
-        return self._execute_tool_endpoint("mobsf")
+        return self.exploit_tools.mobsf()
     
     def frida(self):
-        """Execute frida dynamic analysis"""
-        return self._execute_tool_endpoint("frida")
+        return self.exploit_tools.frida()
     
     def objection(self):
-        """Execute objection mobile testing"""
-        return self._execute_tool_endpoint("objection")
+        return self.exploit_tools.objection()
     
     def enum4linux_ng(self):
-        """Execute enum4linux-ng"""
-        return self._execute_tool_endpoint("enum4linux-ng")
+        return self.network_tools.enum4linux_ng()
     
     def smbmap(self):
-        """Execute smbmap"""
-        return self._execute_tool_endpoint("smbmap")
+        return self.network_tools.smbmap()
     
     def rpcclient(self):
-        """Execute rpcclient"""
-        return self._execute_tool_endpoint("rpcclient")
+        return self.network_tools.rpcclient()
     
     def ldapsearch(self):
-        """Execute ldapsearch"""
-        return self._execute_tool_endpoint("ldapsearch")
+        return self.network_tools.ldapsearch()
     
     def snmpwalk(self):
-        """Execute snmpwalk"""
-        return self._execute_tool_endpoint("snmpwalk")
+        return self.network_tools.snmpwalk()
     
     def responder(self):
-        """Execute responder"""
-        return self._execute_tool_endpoint("responder")
+        return self.network_tools.responder()
     
     def impacket(self):
-        """Execute impacket tools"""
-        return self._execute_tool_endpoint("impacket")
+        return self.network_tools.impacket()
     
     def bloodhound(self):
-        """Execute bloodhound"""
-        return self._execute_tool_endpoint("bloodhound")
+        return self.network_tools.bloodhound()
     
     def crackmapexec(self):
-        """Execute crackmapexec"""
-        return self._execute_tool_endpoint("crackmapexec")
+        return self.network_tools.crackmapexec()
     
     def evil_winrm(self):
-        """Execute evil-winrm"""
-        return self._execute_tool_endpoint("evil-winrm")
+        return self.network_tools.evil_winrm()
     
     def powershell_empire(self):
-        """Execute powershell empire"""
-        return self._execute_tool_endpoint("powershell-empire")
+        return self.exploit_tools.powershell_empire()
     
     def covenant(self):
-        """Execute covenant C2"""
-        return self._execute_tool_endpoint("covenant")
+        return self.exploit_tools.covenant()
     
     def cobalt_strike(self):
-        """Execute cobalt strike"""
-        return self._execute_tool_endpoint("cobalt-strike")
+        return self.exploit_tools.cobalt_strike()
