@@ -88,37 +88,12 @@ try:
     logger.info("🚀 HexStrike AI v6.0 - Modular Architecture Loaded")
     
 except ImportError as e:
-    # Fallback to monolithic mode if modular components not available
-    MODULAR_MODE = False
-    
-    # Configure logging with enhanced formatting
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.FileHandler('hexstrike.log'),
-            logging.StreamHandler()
-        ]
-    )
-    logger = logging.getLogger(__name__)
-    logger.warning(f"⚠️ Modular components not available ({e}), running in monolithic mode")
-    
-    # Global configuration for monolithic mode
-    API_PORT = 8888
-    API_HOST = "127.0.0.1"
+    print(f"❌ Critical Error: Modular components not available ({e})")
+    print("❌ Cannot start HexStrike AI - modular architecture is required")
+    sys.exit(1)
 
-# Flask app initialization
-app = Flask(__name__)
-CORS(app)
 
-try:
-    from src.hexstrike.interfaces.visual_engine import ModernVisualEngine
-except ImportError:
-    # Fallback for compatibility
-    class ModernVisualEngine:
-        @staticmethod
-        def create_banner():
-            return "HexStrike AI - Modular components not available"
+from src.hexstrike.interfaces.visual_engine import ModernVisualEngine
 
 # ============================================================================
 # INTELLIGENT DECISION ENGINE (v6.0 ENHANCEMENT)
@@ -269,31 +244,6 @@ if __name__ == "__main__":
             MODULAR_MODE = False
     
     if not MODULAR_MODE:
-        logger.info("🏛️  Running in monolithic mode...")
-        
-        # Import compatibility shims for backward compatibility
-        try:
-            from hexstrike.legacy.compatibility_shims import (
-                IntelligentDecisionEngine,
-                ModernVisualEngine,
-                IntelligentErrorHandler,
-                ProcessManager,
-                execute_command,
-                execute_command_with_recovery,
-                decision_engine as compat_decision_engine,
-                error_handler as compat_error_handler,
-                visual_engine as compat_visual_engine,
-                process_manager as compat_process_manager
-            )
-            
-            decision_engine = compat_decision_engine
-            error_handler = compat_error_handler
-            visual_engine = compat_visual_engine
-            process_manager = compat_process_manager
-            
-            logger.info("✅ Backward compatibility layer loaded successfully")
-            
-        except ImportError as e:
-            logger.warning(f"⚠️ Compatibility layer not available: {e}")
-            logger.error("❌ Cannot start server - no Flask app available in monolithic mode")
-            sys.exit(1)
+        logger.error("❌ Modular architecture failed to initialize")
+        logger.error("❌ Cannot start server - modular mode is required")
+        sys.exit(1)
