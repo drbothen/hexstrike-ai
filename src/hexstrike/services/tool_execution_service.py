@@ -1,18 +1,19 @@
 """
 Tool execution orchestration and result processing.
 
-This module changes when tool execution logic or result processing changes.
+This module changes when tool execution logic changes.
 """
 
 import subprocess
 import time
-import json
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 from datetime import datetime
 import logging
 from ..platform.errors import ErrorHandler
 from ..platform.validation import validator
+from .execution.command_builder import CommandBuilder
+from .execution.output_parser import OutputParser
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,8 @@ class ToolExecutionService:
         self.execution_history: List[ExecutionResult] = []
         self.cache: Dict[str, ExecutionResult] = {}
         self.cache_ttl = 3600
+        self.command_builder = CommandBuilder()
+        self.output_parser = OutputParser()
     
     def execute_tool(self, tool_name: str, params: Dict[str, Any], use_cache: bool = True) -> ExecutionResult:
         """Execute tool with specified parameters"""
@@ -68,7 +71,7 @@ class ToolExecutionService:
                 logger.info(f"Using cached result for {tool_name}")
                 return cached_result
         
-        command = self._build_command(tool_name, params)
+        command = self.command_builder.build_command(tool_name, params)
         if not command:
             return ExecutionResult(
                 success=False,
@@ -92,7 +95,7 @@ class ToolExecutionService:
             )
             
             execution_time = time.time() - start_time
-            parsed_output = self._parse_tool_output(tool_name, result.stdout)
+            parsed_output = self.output_parser.parse_tool_output(tool_name, result.stdout)
             
             execution_result = ExecutionResult(
                 success=result.returncode == 0,
@@ -211,124 +214,6 @@ class ToolExecutionService:
             target=params.get("target", "")
         )
     
-    def _build_command(self, tool_name: str, params: Dict[str, Any]) -> Optional[str]:
-        """Build command string for tool execution"""
-        target = params.get("target", "")
-        
-        if tool_name == "nmap":
-            scan_type = params.get("scan_type", "-sV")
-            ports = params.get("ports", "")
-            additional_args = params.get("additional_args", "-T4 -Pn")
-            
-            command = f"nmap {scan_type}"
-            if ports:
-                command += f" -p {ports}"
-            if additional_args:
-                command += f" {additional_args}"
-            command += f" {target}"
-            return command
-        
-        elif tool_name == "gobuster":
-            mode = params.get("mode", "dir")
-            wordlist = params.get("wordlist", "/usr/share/wordlists/dirb/common.txt")
-            threads = params.get("threads", 10)
-            extensions = params.get("extensions", "")
-            
-            command = f"gobuster {mode} -u {target} -w {wordlist} -t {threads}"
-            if extensions:
-                command += f" -x {extensions}"
-            return command
-        
-        elif tool_name == "nuclei":
-            severity = params.get("severity", "")
-            tags = params.get("tags", "")
-            template = params.get("template", "")
-            concurrency = params.get("concurrency", 25)
-            
-            command = f"nuclei -u {target} -c {concurrency}"
-            if severity:
-                command += f" -severity {severity}"
-            if tags:
-                command += f" -tags {tags}"
-            if template:
-                command += f" -t {template}"
-            return command
-        
-        else:
-            logger.warning(f"No command builder for tool: {tool_name}")
-            return None
-    
-    def _parse_tool_output(self, tool_name: str, output: str) -> Dict[str, Any]:
-        """Parse tool output into structured data"""
-        parsed = {"raw_output": output}
-        
-        if tool_name == "nmap":
-            parsed.update(self._parse_nmap_output(output))
-        elif tool_name == "nuclei":
-            parsed.update(self._parse_nuclei_output(output))
-        elif tool_name == "gobuster":
-            parsed.update(self._parse_gobuster_output(output))
-        
-        return parsed
-    
-    def _parse_nmap_output(self, output: str) -> Dict[str, Any]:
-        """Parse nmap output"""
-        parsed = {
-            "open_ports": [],
-            "services": {},
-            "os_detection": "",
-            "script_results": []
-        }
-        
-        lines = output.split('\n')
-        for line in lines:
-            if '/tcp' in line and 'open' in line:
-                parts = line.split()
-                if len(parts) >= 3:
-                    port = parts[0].split('/')[0]
-                    service = parts[2] if len(parts) > 2 else "unknown"
-                    parsed["open_ports"].append(int(port))
-                    parsed["services"][int(port)] = service
-        
-        return parsed
-    
-    def _parse_nuclei_output(self, output: str) -> Dict[str, Any]:
-        """Parse nuclei output"""
-        parsed = {
-            "vulnerabilities": [],
-            "total_requests": 0,
-            "templates_loaded": 0
-        }
-        
-        lines = output.split('\n')
-        for line in lines:
-            if '[' in line and ']' in line:
-                if any(sev in line.lower() for sev in ['info', 'low', 'medium', 'high', 'critical']):
-                    parsed["vulnerabilities"].append({
-                        "raw_line": line,
-                        "severity": "unknown"
-                    })
-        
-        return parsed
-    
-    def _parse_gobuster_output(self, output: str) -> Dict[str, Any]:
-        """Parse gobuster output"""
-        parsed = {
-            "found_paths": [],
-            "status_codes": {}
-        }
-        
-        lines = output.split('\n')
-        for line in lines:
-            if 'Status:' in line:
-                parts = line.split()
-                if len(parts) >= 2:
-                    path = parts[0]
-                    status = parts[1].replace('Status:', '').strip()
-                    parsed["found_paths"].append(path)
-                    parsed["status_codes"][path] = status
-        
-        return parsed
     
     def _generate_cache_key(self, tool_name: str, params: Dict[str, Any]) -> str:
         """Generate cache key for tool execution"""
