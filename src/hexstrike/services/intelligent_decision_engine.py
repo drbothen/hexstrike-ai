@@ -403,4 +403,3 @@ class IntelligentDecisionEngine:
         
         chain.risk_level = target_profile.risk_level
         return chain
-</new_str>

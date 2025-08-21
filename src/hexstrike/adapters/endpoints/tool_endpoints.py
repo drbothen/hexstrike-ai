@@ -350,4 +350,3 @@ class ToolEndpoints:
     def terrascan(self):
         """Execute Terrascan IaC security"""
         return self._execute_tool_endpoint("terrascan")
-</new_str>

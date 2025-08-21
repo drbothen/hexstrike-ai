@@ -317,4 +317,3 @@ class CTFWorkflowManager:
         
         optimized["estimated_time"] = current_time
         return optimized
-</new_str>

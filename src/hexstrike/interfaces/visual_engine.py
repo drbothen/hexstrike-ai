@@ -6,66 +6,78 @@ This module changes when visual output formatting requirements or color schemes 
 
 from typing import Dict, Any, Optional
 import time
-from ..platform.constants import COLORS
+from ..platform.constants import API_HOST, API_PORT
 
 class ModernVisualEngine:
     """Beautiful, modern output formatting with animations and colors"""
     
+    # Enhanced color palette with reddish tones and better highlighting
     COLORS = {
+        'MATRIX_GREEN': '\033[38;5;46m',
+        'NEON_BLUE': '\033[38;5;51m', 
+        'ELECTRIC_PURPLE': '\033[38;5;129m',
+        'CYBER_ORANGE': '\033[38;5;208m',
+        'HACKER_RED': '\033[38;5;196m',
+        'TERMINAL_GRAY': '\033[38;5;240m',
+        'BRIGHT_WHITE': '\033[97m',
         'RESET': '\033[0m',
         'BOLD': '\033[1m',
         'DIM': '\033[2m',
-        'UNDERLINE': '\033[4m',
-        'BLINK': '\033[5m',
-        'REVERSE': '\033[7m',
-        'STRIKETHROUGH': '\033[9m',
-        'BLACK': '\033[30m',
-        'RED': '\033[31m',
-        'GREEN': '\033[32m',
-        'YELLOW': '\033[33m',
-        'BLUE': '\033[34m',
-        'MAGENTA': '\033[35m',
-        'CYAN': '\033[36m',
-        'WHITE': '\033[37m',
-        'BRIGHT_BLACK': '\033[90m',
-        'BRIGHT_RED': '\033[91m',
-        'BRIGHT_GREEN': '\033[92m',
-        'BRIGHT_YELLOW': '\033[93m',
-        'BRIGHT_BLUE': '\033[94m',
-        'BRIGHT_MAGENTA': '\033[95m',
-        'BRIGHT_CYAN': '\033[96m',
-        'BRIGHT_WHITE': '\033[97m',
-        'BG_BLACK': '\033[40m',
-        'BG_RED': '\033[41m',
-        'BG_GREEN': '\033[42m',
-        'BG_YELLOW': '\033[43m',
-        'BG_BLUE': '\033[44m',
-        'BG_MAGENTA': '\033[45m',
-        'BG_CYAN': '\033[46m',
-        'BG_WHITE': '\033[47m',
-        'FIRE_RED': '\033[38;5;196m',
-        'CYBER_ORANGE': '\033[38;5;208m',
-        'NEON_GREEN': '\033[38;5;46m',
-        'ELECTRIC_BLUE': '\033[38;5;33m',
-        'PURPLE_GLOW': '\033[38;5;129m',
-        'YELLOW_BRIGHT': '\033[38;5;226m',
-        'WHITE_BRIGHT': '\033[38;5;15m',
-        'GRAY_DARK': '\033[38;5;240m',
-        'PRIMARY_BORDER': '\033[38;5;33m',
-        'TOOL_RUNNING': '\033[38;5;208m',
-        'TOOL_SUCCESS': '\033[38;5;46m',
-        'TOOL_ERROR': '\033[38;5;196m',
-        'TOOL_WARNING': '\033[38;5;226m',
-        'CRITICAL': '\033[38;5;196m',
-        'HIGH': '\033[38;5;208m',
-        'MEDIUM': '\033[38;5;226m',
-        'LOW': '\033[38;5;46m',
-        'INFO': '\033[38;5;33m',
-        'UNKNOWN': '\033[38;5;240m',
-        'SUCCESS': '\033[38;5;46m',
-        'WARNING': '\033[38;5;226m',
-        'ERROR': '\033[38;5;196m'
+        # New reddish tones and highlighting colors
+        'BLOOD_RED': '\033[38;5;124m',
+        'CRIMSON': '\033[38;5;160m',
+        'DARK_RED': '\033[38;5;88m',
+        'FIRE_RED': '\033[38;5;202m',
+        'ROSE_RED': '\033[38;5;167m',
+        'BURGUNDY': '\033[38;5;52m',
+        'SCARLET': '\033[38;5;197m',
+        'RUBY': '\033[38;5;161m',
+        # Unified theme primary/secondary (used going forward instead of legacy blue/green accents)
+        'PRIMARY_BORDER': '\033[38;5;160m',  # CRIMSON
+        'ACCENT_LINE': '\033[38;5;196m',      # HACKER_RED
+        'ACCENT_GRADIENT': '\033[38;5;124m',  # BLOOD_RED (for subtle alternation)
+        # Highlighting colors
+        'HIGHLIGHT_RED': '\033[48;5;196m\033[38;5;15m',  # Red background, white text
+        'HIGHLIGHT_YELLOW': '\033[48;5;226m\033[38;5;16m',  # Yellow background, black text
+        'HIGHLIGHT_GREEN': '\033[48;5;46m\033[38;5;16m',  # Green background, black text
+        'HIGHLIGHT_BLUE': '\033[48;5;51m\033[38;5;16m',  # Blue background, black text
+        'HIGHLIGHT_PURPLE': '\033[48;5;129m\033[38;5;15m',  # Purple background, white text
+        # Status colors with reddish tones
+        'SUCCESS': '\033[38;5;46m',  # Bright green
+        'WARNING': '\033[38;5;208m',  # Orange
+        'ERROR': '\033[38;5;196m',  # Bright red
+        'CRITICAL': '\033[48;5;196m\033[38;5;15m\033[1m',  # Red background, white bold text
+        'INFO': '\033[38;5;51m',  # Cyan
+        'DEBUG': '\033[38;5;240m',  # Gray
+        # Vulnerability severity colors
+        'VULN_CRITICAL': '\033[48;5;124m\033[38;5;15m\033[1m',  # Dark red background
+        'VULN_HIGH': '\033[38;5;196m\033[1m',  # Bright red bold
+        'VULN_MEDIUM': '\033[38;5;208m\033[1m',  # Orange bold
+        'VULN_LOW': '\033[38;5;226m',  # Yellow
+        'VULN_INFO': '\033[38;5;51m',  # Cyan
+        # Tool status colors
+        'TOOL_RUNNING': '\033[38;5;46m\033[5m',  # Blinking green
+        'TOOL_SUCCESS': '\033[38;5;46m\033[1m',  # Bold green
+        'TOOL_FAILED': '\033[38;5;196m\033[1m',  # Bold red
+        'TOOL_TIMEOUT': '\033[38;5;208m\033[1m',  # Bold orange
+        'TOOL_RECOVERY': '\033[38;5;129m\033[1m',  # Bold purple
+        # Progress and animation colors
+        'PROGRESS_BAR': '\033[38;5;46m',  # Green
+        'PROGRESS_EMPTY': '\033[38;5;240m',  # Gray
+        'SPINNER': '\033[38;5;51m',  # Cyan
+        'PULSE': '\033[38;5;196m\033[5m'  # Blinking red
     }
+    
+    # Progress animation styles
+    PROGRESS_STYLES = {
+        'dots': ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'],
+        'bars': ['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'],
+        'arrows': ['←', '↖', '↑', '↗', '→', '↘', '↓', '↙'],
+        'pulse': ['●', '◐', '◑', '◒', '◓', '◔', '◕', '◖', '◗', '◘']
+    }
+    
+    @staticmethod</old_str>
+
     
     @staticmethod
     def create_banner() -> str:

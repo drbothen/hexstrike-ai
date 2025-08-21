@@ -289,4 +289,3 @@ class CTFEndpoints:
         except Exception as e:
             logger.error(f"💥 Error in CTF binary analyzer: {str(e)}")
             return jsonify({"error": f"Server error: {str(e)}"}), 500
-</new_str>

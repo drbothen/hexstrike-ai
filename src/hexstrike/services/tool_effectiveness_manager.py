@@ -218,4 +218,3 @@ class ToolEffectivenessManager:
             "most_updated_tools": sorted(tool_update_counts.items(), key=lambda x: x[1], reverse=True)[:10],
             "learning_enabled": self.learning_enabled
         }
-</new_str>

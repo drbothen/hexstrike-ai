@@ -6,133 +6,23 @@ This module changes when bug bounty strategies or vulnerability priorities chang
 
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
-from enum import Enum
 import logging
+from .bugbounty_target import BugBountyTarget
+from .bugbounty_strategies import BugBountyStrategies, VulnerabilityType
 
 logger = logging.getLogger(__name__)
-
-class VulnerabilityType(Enum):
-    RCE = "rce"
-    SQLI = "sqli"
-    XSS = "xss"
-    IDOR = "idor"
-    SSRF = "ssrf"
-    LFI = "lfi"
-    XXE = "xxe"
-    CSRF = "csrf"
-
-@dataclass
-class BugBountyTarget:
-    """Bug bounty target information"""
-    domain: str
-    scope: List[str] = field(default_factory=list)
-    out_of_scope: List[str] = field(default_factory=list)
-    program_type: str = "web"
-    priority_vulns: List[str] = field(default_factory=lambda: ["rce", "sqli", "xss", "idor", "ssrf"])
-    bounty_range: str = "unknown"
 
 class BugBountyWorkflowManager:
     """Specialized workflow manager for bug bounty hunting"""
     
     def __init__(self):
-        self.high_impact_vulns = self._initialize_vulnerability_priorities()
-        self.reconnaissance_tools = self._initialize_reconnaissance_tools()
-        self.hunting_strategies = self._initialize_hunting_strategies()
+        self.strategies = BugBountyStrategies()
+        self.high_impact_vulns = self.strategies.vulnerability_priorities
+        self.reconnaissance_tools = self.strategies.recon_tools
+        self.hunting_strategies = self.strategies.hunting_strategies
     
-    def _initialize_vulnerability_priorities(self) -> Dict[str, Dict[str, Any]]:
-        """Initialize vulnerability priorities and associated tools"""
-        return {
-            "rce": {
-                "priority": 10,
-                "tools": ["nuclei", "jaeles", "sqlmap"],
-                "payloads": "command_injection",
-                "bounty_multiplier": 3.0
-            },
-            "sqli": {
-                "priority": 9,
-                "tools": ["sqlmap", "nuclei"],
-                "payloads": "sql_injection",
-                "bounty_multiplier": 2.5
-            },
-            "ssrf": {
-                "priority": 8,
-                "tools": ["nuclei", "ffuf"],
-                "payloads": "ssrf",
-                "bounty_multiplier": 2.0
-            },
-            "idor": {
-                "priority": 8,
-                "tools": ["arjun", "paramspider", "ffuf"],
-                "payloads": "idor",
-                "bounty_multiplier": 1.8
-            },
-            "xss": {
-                "priority": 7,
-                "tools": ["dalfox", "nuclei"],
-                "payloads": "xss",
-                "bounty_multiplier": 1.5
-            },
-            "lfi": {
-                "priority": 7,
-                "tools": ["ffuf", "nuclei"],
-                "payloads": "lfi",
-                "bounty_multiplier": 1.5
-            },
-            "xxe": {
-                "priority": 6,
-                "tools": ["nuclei"],
-                "payloads": "xxe",
-                "bounty_multiplier": 1.3
-            },
-            "csrf": {
-                "priority": 5,
-                "tools": ["nuclei"],
-                "payloads": "csrf",
-                "bounty_multiplier": 1.0
-            }
-        }
     
-    def _initialize_reconnaissance_tools(self) -> List[Dict[str, Any]]:
-        """Initialize reconnaissance tool chain"""
-        return [
-            {"tool": "amass", "phase": "subdomain_enum", "priority": 1, "estimated_time": 600},
-            {"tool": "subfinder", "phase": "subdomain_enum", "priority": 2, "estimated_time": 300},
-            {"tool": "httpx", "phase": "http_probe", "priority": 3, "estimated_time": 180},
-            {"tool": "katana", "phase": "crawling", "priority": 4, "estimated_time": 900},
-            {"tool": "gau", "phase": "url_discovery", "priority": 5, "estimated_time": 400},
-            {"tool": "waybackurls", "phase": "url_discovery", "priority": 6, "estimated_time": 300},
-            {"tool": "paramspider", "phase": "parameter_discovery", "priority": 7, "estimated_time": 500},
-            {"tool": "arjun", "phase": "parameter_discovery", "priority": 8, "estimated_time": 600}
-        ]
     
-    def _initialize_hunting_strategies(self) -> Dict[str, Dict[str, Any]]:
-        """Initialize bug bounty hunting strategies"""
-        return {
-            "comprehensive_recon": {
-                "description": "Comprehensive reconnaissance workflow",
-                "phases": ["subdomain_enum", "http_probe", "crawling", "url_discovery", "parameter_discovery"],
-                "estimated_time": 3600,
-                "success_rate": 0.8
-            },
-            "vulnerability_focused": {
-                "description": "Focus on high-impact vulnerability discovery",
-                "phases": ["quick_recon", "vulnerability_scanning", "exploitation"],
-                "estimated_time": 2400,
-                "success_rate": 0.6
-            },
-            "business_logic": {
-                "description": "Business logic vulnerability testing",
-                "phases": ["application_mapping", "workflow_analysis", "logic_testing"],
-                "estimated_time": 4800,
-                "success_rate": 0.4
-            },
-            "osint_focused": {
-                "description": "OSINT-driven vulnerability discovery",
-                "phases": ["osint_gathering", "credential_hunting", "exposed_assets"],
-                "estimated_time": 1800,
-                "success_rate": 0.7
-            }
-        }
     
     def create_reconnaissance_workflow(self, target: BugBountyTarget) -> Dict[str, Any]:
         """Create comprehensive reconnaissance workflow"""
