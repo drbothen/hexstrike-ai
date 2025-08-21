@@ -16,10 +16,21 @@ class BugBountyWorkflowManager:
     """Specialized workflow manager for bug bounty hunting"""
     
     def __init__(self):
-        self.strategies = BugBountyStrategies()
-        self.high_impact_vulns = self.strategies.vulnerability_priorities
-        self.reconnaissance_tools = self.strategies.recon_tools
-        self.hunting_strategies = self.strategies.hunting_strategies
+        try:
+            self.strategies = BugBountyStrategies()
+            self.high_impact_vulns = self.strategies.vulnerability_priorities
+            self.reconnaissance_tools = self.strategies.recon_tools
+            self.hunting_strategies = self.strategies.hunting_strategies
+        except ImportError:
+            self.high_impact_vulns = {
+                "rce": {"priority": 10, "bounty_multiplier": 3.0, "tools": ["nuclei", "commix"]},
+                "sqli": {"priority": 9, "bounty_multiplier": 2.5, "tools": ["sqlmap", "nuclei"]},
+                "xss": {"priority": 7, "bounty_multiplier": 1.5, "tools": ["dalfox", "nuclei"]},
+                "idor": {"priority": 8, "bounty_multiplier": 2.0, "tools": ["nuclei", "manual"]},
+                "ssrf": {"priority": 8, "bounty_multiplier": 2.0, "tools": ["nuclei", "manual"]}
+            }
+            self.reconnaissance_tools = ["amass", "subfinder", "httpx", "nuclei"]
+            self.hunting_strategies = {}
     
     
     
@@ -293,3 +304,32 @@ class BugBountyWorkflowManager:
                 "high_impact_count": high_impact_vulns
             }
         }
+    
+    def _get_test_scenarios(self, target_type: str) -> List[Dict[str, Any]]:
+        """Get test scenarios based on target type"""
+        scenarios = {
+            "web_application": [
+                {"name": "authentication_bypass", "priority": "high", "tools": ["nuclei", "manual"]},
+                {"name": "injection_testing", "priority": "high", "tools": ["sqlmap", "nuclei", "commix"]},
+                {"name": "business_logic_flaws", "priority": "medium", "tools": ["manual"]},
+                {"name": "session_management", "priority": "medium", "tools": ["manual", "nuclei"]},
+                {"name": "file_upload_bypass", "priority": "high", "tools": ["manual"]},
+                {"name": "access_control", "priority": "high", "tools": ["nuclei", "manual"]}
+            ],
+            "api": [
+                {"name": "authentication_bypass", "priority": "high", "tools": ["nuclei", "manual"]},
+                {"name": "authorization_flaws", "priority": "high", "tools": ["manual"]},
+                {"name": "injection_attacks", "priority": "high", "tools": ["sqlmap", "nuclei"]},
+                {"name": "rate_limiting", "priority": "medium", "tools": ["manual"]},
+                {"name": "data_exposure", "priority": "high", "tools": ["manual", "nuclei"]}
+            ],
+            "mobile": [
+                {"name": "insecure_storage", "priority": "medium", "tools": ["manual"]},
+                {"name": "weak_cryptography", "priority": "high", "tools": ["manual"]},
+                {"name": "insecure_communication", "priority": "high", "tools": ["manual"]},
+                {"name": "authentication_bypass", "priority": "high", "tools": ["manual"]},
+                {"name": "code_injection", "priority": "high", "tools": ["manual"]}
+            ]
+        }
+        
+        return scenarios.get(target_type, scenarios["web_application"])

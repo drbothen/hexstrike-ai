@@ -13,7 +13,8 @@ from ..services.decision_service import DecisionService
 from ..services.tool_execution_service import ToolExecutionService
 from ..services.process_service import ProcessService
 from ..interfaces.visual_engine import ModernVisualEngine as VisualEngine
-from ..platform.errors import ErrorHandler, ErrorType, RecoveryAction
+from ..services.error_handler import IntelligentErrorHandler as ErrorHandler, ErrorType, RecoveryAction
+from ..services.graceful_degradation import GracefulDegradation
 from ..domain.target_analysis import TargetProfile, TargetType, TechnologyStack
 
 def _deprecation_warning(old_name: str, new_import: str) -> None:
@@ -120,13 +121,13 @@ class IntelligentErrorHandler:
     """
     Compatibility wrapper for the original IntelligentErrorHandler.
     
-    DEPRECATED: Use hexstrike.platform.errors.ErrorHandler instead.
+    DEPRECATED: Use hexstrike.services.error_handler.IntelligentErrorHandler instead.
     """
     
     def __init__(self):
         _deprecation_warning(
             "IntelligentErrorHandler",
-            "hexstrike.platform.errors.ErrorHandler"
+            "hexstrike.services.error_handler.IntelligentErrorHandler"
         )
         self._handler = ErrorHandler()
     
