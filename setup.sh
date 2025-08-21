@@ -2,7 +2,7 @@
 
 # HexStrike AI - Official Tools Verification Script (Based on Official README)
 # Supports multiple Linux distributions with verified download links
-# Version 3.0 - Complete coverage of all 70+ HexStrike AI tools
+# Version 3.1 - Phase 1 Enhancements: Error handling, parallel processing, system validation, logging
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -14,6 +14,85 @@ WHITE='\033[1;37m'
 ORANGE='\033[0;33m'
 NC='\033[0m' # No Color
 
+LOG_LEVEL=${LOG_LEVEL:-"INFO"}  # DEBUG, INFO, WARN, ERROR
+LOG_FILE="/tmp/hexstrike_setup_$(date +%Y%m%d_%H%M%S).log"
+LOG_TO_FILE=${LOG_TO_FILE:-true}
+
+# Initialize logging
+setup_logging() {
+    if [ "$LOG_TO_FILE" = true ]; then
+        mkdir -p "$(dirname "$LOG_FILE")"
+        
+        exec 3>&1 4>&2
+        if [ "$LOG_LEVEL" = "DEBUG" ]; then
+            exec 1> >(tee -a "$LOG_FILE")
+            exec 2> >(tee -a "$LOG_FILE" >&2)
+        else
+            exec 1> >(tee -a "$LOG_FILE")
+            exec 2> >(tee -a "$LOG_FILE" >&2)
+        fi
+        
+        echo -e "${CYAN}📝 Logging to: $LOG_FILE${NC}"
+        log_with_timestamp "HexStrike AI Setup Script v3.1 started"
+        log_with_timestamp "System: $(uname -a)"
+        log_with_timestamp "User: $(whoami)"
+        log_with_timestamp "Working directory: $(pwd)"
+    fi
+}
+
+log_with_timestamp() {
+    local message="$1"
+    local level=${2:-"INFO"}
+    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    
+    if [ "$LOG_TO_FILE" = true ]; then
+        echo "[$timestamp] [$level] $message" >> "$LOG_FILE"
+    fi
+    
+    case $level in
+        "ERROR") echo -e "${RED}[$timestamp] [ERROR] $message${NC}" ;;
+        "WARN")  echo -e "${YELLOW}[$timestamp] [WARN] $message${NC}" ;;
+        "INFO")  echo -e "${CYAN}[$timestamp] [INFO] $message${NC}" ;;
+        "DEBUG") [ "$LOG_LEVEL" = "DEBUG" ] && echo -e "${MAGENTA}[$timestamp] [DEBUG] $message${NC}" ;;
+    esac
+}
+
+show_progress() {
+    local current=$1
+    local total=$2
+    local task_name=${3:-"Processing"}
+    local width=40
+    
+    if [ "$total" -eq 0 ]; then
+        return
+    fi
+    
+    local percentage=$((current * 100 / total))
+    local completed=$((width * current / total))
+    local remaining=$((width - completed))
+    
+    printf "\r${CYAN}%s: [" "$task_name"
+    printf "%*s" $completed | tr ' ' '█'
+    printf "%*s" $remaining | tr ' ' '░'
+    printf "] %d%% (%d/%d)${NC}" $percentage $current $total
+    
+    if [ "$current" -eq "$total" ]; then
+        echo ""  # New line when complete
+    fi
+}
+
+cleanup_logging() {
+    if [ "$LOG_TO_FILE" = true ]; then
+        log_with_timestamp "HexStrike AI Setup Script completed"
+        echo -e "${GREEN}📝 Full log saved to: $LOG_FILE${NC}"
+        
+        exec 1>&3 2>&4
+        exec 3>&- 4>&-
+    fi
+}
+
+trap cleanup_logging EXIT
+
 # Banner
 echo -e "${CYAN}"
 echo "██╗  ██╗███████╗██╗  ██╗███████╗████████╗██████╗ ██╗██╗  ██╗███████╗"
@@ -23,7 +102,7 @@ echo "██╔══██║██╔══╝   ██╔██╗ ╚══�
 echo "██║  ██║███████╗██╔╝ ██╗███████║   ██║   ██║  ██║██║██║  ██╗███████╗"
 echo "╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝╚══════╝"
 echo -e "${NC}"
-echo -e "${WHITE}HexStrike AI - Official Security Tools Checker v3.0${NC}"
+echo -e "${WHITE}HexStrike AI - Official Security Tools Checker v3.1${NC}"
 echo -e "${BLUE}🔗 Based on official HexStrike AI README - 70+ tools coverage${NC}"
 echo -e "${ORANGE}📋 Comprehensive verification with working download links${NC}"
 echo ""
@@ -34,18 +113,75 @@ if command -v curl > /dev/null 2>&1; then
     CURL_AVAILABLE=true
 fi
 
-# Function to check if URL is accessible
 check_url() {
     local url=$1
+    local timeout=${2:-10}
+    local max_retries=2
+    local retry=0
+    
     if [ "$CURL_AVAILABLE" = true ]; then
-        if curl --output /dev/null --silent --head --fail --max-time 10 "$url"; then
-            return 0
-        else
-            return 1
-        fi
+        while [ $retry -le $max_retries ]; do
+            if timeout $timeout curl --output /dev/null --silent --head --fail \
+               --max-time $timeout --retry 1 --retry-delay 1 \
+               --user-agent "HexStrike-AI-Setup/3.1" "$url" 2>/dev/null; then
+                return 0
+            fi
+            ((retry++))
+            [ $retry -le $max_retries ] && sleep 1
+        done
+        return 1
     else
         return 0  # Assume working if curl not available
     fi
+}
+
+install_with_retry() {
+    local cmd="$1"
+    local tool_name="$2"
+    local max_attempts=3
+    local attempt=1
+    local wait_time=2
+    
+    while [ $attempt -le $max_attempts ]; do
+        log_with_timestamp "Attempting to install $tool_name (attempt $attempt/$max_attempts)"
+        
+        if timeout 300 bash -c "$cmd" 2>/dev/null; then
+            log_with_timestamp "✅ Successfully installed $tool_name"
+            return 0
+        else
+            local exit_code=$?
+            log_with_timestamp "❌ Installation attempt $attempt failed for $tool_name (exit code: $exit_code)" "WARN"
+            
+            if [ $attempt -lt $max_attempts ]; then
+                log_with_timestamp "⏳ Waiting ${wait_time}s before retry..."
+                sleep $wait_time
+                wait_time=$((wait_time * 2))  # Exponential backoff
+            fi
+            ((attempt++))
+        fi
+    done
+    
+    log_with_timestamp "🚫 Failed to install $tool_name after $max_attempts attempts" "ERROR"
+    return 1
+}
+
+create_installation_checkpoint() {
+    local checkpoint_file="/tmp/hexstrike_checkpoint_$(date +%s).txt"
+    
+    case $DISTRO in
+        "ubuntu"|"debian"|"kali"|"parrot"|"mint")
+            dpkg --get-selections > "$checkpoint_file" 2>/dev/null
+            ;;
+        "fedora"|"rhel"|"centos")
+            rpm -qa > "$checkpoint_file" 2>/dev/null
+            ;;
+        "arch"|"manjaro"|"endeavouros")
+            pacman -Q > "$checkpoint_file" 2>/dev/null
+            ;;
+    esac
+    
+    echo "$checkpoint_file"
+    log_with_timestamp "📋 Created installation checkpoint: $checkpoint_file"
 }
 
 # Detect Linux distribution
@@ -124,6 +260,96 @@ get_package_manager() {
     esac
     
     echo -e "${BLUE}📦 Package Manager: ${CYAN}$PKG_MANAGER${NC}"
+    echo ""
+}
+
+# System resource validation
+check_system_resources() {
+    echo -e "${BLUE}🖥️  Checking system resources...${NC}"
+    
+    local ram_gb=$(free -g | awk '/^Mem:/{print $2}')
+    local ram_mb=$(free -m | awk '/^Mem:/{print $2}')
+    local min_ram_gb=4
+    
+    if [ "$ram_gb" -lt "$min_ram_gb" ]; then
+        echo -e "⚠️  ${YELLOW}Warning: Low RAM detected${NC}"
+        echo -e "   Current: ${ram_mb}MB | Recommended: ${min_ram_gb}GB+"
+        echo -e "   Some tools may fail or run slowly"
+        log_with_timestamp "Low RAM detected: ${ram_mb}MB (recommended: ${min_ram_gb}GB+)" "WARN"
+    else
+        echo -e "✅ ${GREEN}RAM: ${ram_gb}GB (sufficient)${NC}"
+        log_with_timestamp "RAM check passed: ${ram_gb}GB"
+    fi
+    
+    local disk_gb=$(df -BG / | awk 'NR==2{gsub(/G/,"",$4); print $4}')
+    local min_disk_gb=10
+    
+    if [ "$disk_gb" -lt "$min_disk_gb" ]; then
+        echo -e "⚠️  ${YELLOW}Warning: Low disk space${NC}"
+        echo -e "   Available: ${disk_gb}GB | Recommended: ${min_disk_gb}GB+"
+        echo -e "   Tool installation may fail"
+        log_with_timestamp "Low disk space: ${disk_gb}GB (recommended: ${min_disk_gb}GB+)" "WARN"
+    else
+        echo -e "✅ ${GREEN}Disk Space: ${disk_gb}GB available${NC}"
+        log_with_timestamp "Disk space check passed: ${disk_gb}GB available"
+    fi
+    
+    local cpu_cores=$(nproc)
+    echo -e "ℹ️  ${CYAN}CPU Cores: $cpu_cores${NC}"
+    log_with_timestamp "CPU cores detected: $cpu_cores"
+    
+    if ping -c 1 -W 5 8.8.8.8 >/dev/null 2>&1; then
+        echo -e "✅ ${GREEN}Internet connectivity: OK${NC}"
+        log_with_timestamp "Internet connectivity check passed"
+    else
+        echo -e "❌ ${RED}Internet connectivity: FAILED${NC}"
+        echo -e "   Tool downloads will fail"
+        log_with_timestamp "Internet connectivity check failed" "ERROR"
+        return 1
+    fi
+    
+    if command -v "$PKG_MANAGER" >/dev/null 2>&1; then
+        echo -e "✅ ${GREEN}Package manager ($PKG_MANAGER): Available${NC}"
+        log_with_timestamp "Package manager check passed: $PKG_MANAGER"
+    else
+        echo -e "❌ ${RED}Package manager ($PKG_MANAGER): Not found${NC}"
+        log_with_timestamp "Package manager check failed: $PKG_MANAGER not found" "ERROR"
+        return 1
+    fi
+    
+    echo ""
+    return 0
+}
+
+check_dependency_conflicts() {
+    echo -e "${BLUE}🔍 Checking for potential dependency conflicts...${NC}"
+    log_with_timestamp "Starting dependency conflict check"
+    
+    local conflicts_found=false
+    
+    case $DISTRO in
+        "ubuntu"|"debian"|"kali"|"parrot"|"mint")
+            if command -v python2 >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
+                local py2_version=$(python2 --version 2>&1 | awk '{print $2}')
+                local py3_version=$(python3 --version 2>&1 | awk '{print $2}')
+                echo -e "ℹ️  ${CYAN}Python versions: 2.x ($py2_version), 3.x ($py3_version)${NC}"
+                log_with_timestamp "Python versions detected: 2.x ($py2_version), 3.x ($py3_version)"
+            fi
+            
+            if dpkg -l | grep -q "python-pip" && dpkg -l | grep -q "python3-pip"; then
+                echo -e "⚠️  ${YELLOW}Warning: Both python-pip and python3-pip installed${NC}"
+                echo -e "   This may cause package conflicts"
+                log_with_timestamp "Potential pip conflict: both python-pip and python3-pip installed" "WARN"
+                conflicts_found=true
+            fi
+            ;;
+    esac
+    
+    if [ "$conflicts_found" = false ]; then
+        echo -e "✅ ${GREEN}No obvious dependency conflicts detected${NC}"
+        log_with_timestamp "No dependency conflicts detected"
+    fi
+    
     echo ""
 }
 
@@ -345,6 +571,66 @@ check_tool() {
     return 1
 }
 
+verify_urls_parallel() {
+    local -n url_results=$1
+    shift
+    local urls=("$@")
+    local pids=()
+    local temp_dir="/tmp/hexstrike_url_check_$$"
+    
+    mkdir -p "$temp_dir"
+    
+    echo -e "${BLUE}🔍 Verifying URLs in parallel (${#urls[@]} URLs)...${NC}"
+    log_with_timestamp "Starting parallel URL verification for ${#urls[@]} URLs"
+    
+    local i=0
+    for url in "${urls[@]}"; do
+        (
+            if check_url "$url"; then
+                echo "SUCCESS" > "$temp_dir/result_$i"
+            else
+                echo "FAILED" > "$temp_dir/result_$i"
+            fi
+        ) &
+        pids+=($!)
+        ((i++))
+        
+        if [ ${#pids[@]} -ge 10 ]; then
+            wait "${pids[0]}"
+            pids=("${pids[@]:1}")
+        fi
+    done
+    
+    for pid in "${pids[@]}"; do
+        wait "$pid"
+    done
+    
+    i=0
+    for url in "${urls[@]}"; do
+        if [ -f "$temp_dir/result_$i" ]; then
+            url_results["$url"]=$(cat "$temp_dir/result_$i")
+        else
+            url_results["$url"]="FAILED"
+        fi
+        ((i++))
+    done
+    
+    rm -rf "$temp_dir"
+    
+    local success_count=0
+    local failed_count=0
+    for result in "${url_results[@]}"; do
+        if [ "$result" = "SUCCESS" ]; then
+            ((success_count++))
+        else
+            ((failed_count++))
+        fi
+    done
+    
+    echo -e "✅ ${GREEN}URL verification complete: $success_count verified, $failed_count failed${NC}"
+    log_with_timestamp "Parallel URL verification complete: $success_count verified, $failed_count failed"
+}
+
 # Function to validate and generate installation commands
 generate_verified_install_commands() {
     if [ $MISSING_COUNT -eq 0 ]; then
@@ -361,9 +647,42 @@ generate_verified_install_commands() {
     local MANUAL_INSTALLS=""
     local FAILED_VERIFICATIONS=""
     
+    declare -A urls_to_check
+    declare -A url_results
+    local urls_array=()
+    
     for missing in "${MISSING_TOOLS[@]}"; do
         local tool=$(echo "$missing" | cut -d':' -f1)
         local package=$(echo "$missing" | cut -d':' -f2)
+        
+        if [ -n "${TOOL_INSTALL_INFO[$tool]}" ]; then
+            IFS='|' read -r install_type install_info description <<< "${TOOL_INSTALL_INFO[$tool]}"
+            
+            case $install_type in
+                "go_install")
+                    local go_url="https://$install_info"
+                    urls_to_check["$go_url"]="$tool:go_install:$install_info:$description"
+                    urls_array+=("$go_url")
+                    ;;
+                "github_release"|"github_manual"|"manual_download")
+                    urls_to_check["$install_info"]="$tool:$install_type:$install_info:$description"
+                    urls_array+=("$install_info")
+                    ;;
+            esac
+        fi
+    done
+    
+    if [ ${#urls_array[@]} -gt 0 ]; then
+        verify_urls_parallel url_results "${urls_array[@]}"
+    fi
+    
+    local current_tool=0
+    for missing in "${MISSING_TOOLS[@]}"; do
+        local tool=$(echo "$missing" | cut -d':' -f1)
+        local package=$(echo "$missing" | cut -d':' -f2)
+        
+        ((current_tool++))
+        show_progress $current_tool $MISSING_COUNT "Processing tools"
         
         if [ -n "${TOOL_INSTALL_INFO[$tool]}" ]; then
             IFS='|' read -r install_type install_info description <<< "${TOOL_INSTALL_INFO[$tool]}"
@@ -374,13 +693,13 @@ generate_verified_install_commands() {
                     ;;
                 
                 "go_install")
-                    echo -e "${BLUE}🔍 Verifying Go package: $install_info${NC}"
-                    if check_url "https://$install_info"; then
+                    local go_url="https://$install_info"
+                    if [ "${url_results[$go_url]}" = "SUCCESS" ]; then
                         GO_TOOLS+="\n  go install -v $install_info@latest"
-                        echo -e "  ✅ ${GREEN}Verified${NC}"
+                        log_with_timestamp "✅ Go package verified: $install_info"
                     else
                         GO_TOOLS+="\n  go install -v $install_info@latest  # ⚠️  Could not verify"
-                        echo -e "  ⚠️  ${YELLOW}Could not verify URL${NC}"
+                        log_with_timestamp "⚠️ Go package verification failed: $install_info" "WARN"
                     fi
                     ;;
                 
@@ -389,8 +708,7 @@ generate_verified_install_commands() {
                     ;;
                 
                 "github_release")
-                    echo -e "${BLUE}🔍 Verifying GitHub release: $install_info${NC}"
-                    if check_url "$install_info"; then
+                    if [ "${url_results[$install_info]}" = "SUCCESS" ]; then
                         GITHUB_RELEASES+="\n# $tool - $description\nwget $install_info\n"
                         echo -e "  ✅ ${GREEN}Download link verified${NC}"
                     else
@@ -549,11 +867,23 @@ generate_verified_install_commands() {
 }
 
 # Main execution
+# Initialize logging system
+setup_logging
+
 echo -e "${ORANGE}🔍 Initializing complete HexStrike AI tool database...${NC}"
 init_complete_tool_database
 
 detect_distro
 get_package_manager
+
+log_with_timestamp "Starting system validation checks"
+if ! check_system_resources; then
+    echo -e "${RED}❌ Critical system requirements not met${NC}"
+    log_with_timestamp "System validation failed - critical requirements not met" "ERROR"
+    echo -e "${YELLOW}⚠️  Continuing anyway, but installations may fail${NC}"
+fi
+
+check_dependency_conflicts
 
 if [ "$CURL_AVAILABLE" = false ]; then
    echo -e "${YELLOW}⚠️  curl not found. Link verification disabled. Install curl for full functionality.${NC}"
