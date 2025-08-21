@@ -1,0 +1,93 @@
+name: Import Cycle Detection
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  detect-cycles:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        pip install grimp import-linter
+        
+    - name: Check for import cycles with grimp
+      run: |
+        echo "Checking for import cycles in src/hexstrike..."
+        
+        # Check for cycles in the main package
+        python -c "
+        import grimp
+        import sys
+        
+        try:
+            graph = grimp.build_graph('src/hexstrike')
+            cycles = graph.find_cycles()
+            
+            if cycles:
+                print('❌ IMPORT CYCLES DETECTED:')
+                for cycle in cycles:
+                    print(f'  Cycle: {\" -> \".join(cycle)}')
+                sys.exit(1)
+            else:
+                print('✅ No import cycles detected!')
+        except Exception as e:
+            print(f'Error analyzing imports: {e}')
+            sys.exit(1)
+        "
+        
+    - name: Validate layer dependencies with import-linter
+      run: |
+        # Create import-linter configuration
+        cat > .importlinter << EOF
+        [importlinter]
+        root_package = hexstrike
+        
+        [importlinter:contract:1]
+        name = Layer dependencies
+        type = layers
+        layers =
+            hexstrike.interfaces
+            hexstrike.services
+            hexstrike.domain
+            hexstrike.adapters
+            hexstrike.platform
+            hexstrike.utils
+        
+        [importlinter:contract:2]
+        name = Domain isolation
+        type = forbidden
+        source_modules =
+            hexstrike.domain
+        forbidden_modules =
+            hexstrike.services
+            hexstrike.adapters
+            hexstrike.interfaces
+        
+        [importlinter:contract:3]
+        name = Utils isolation
+        type = forbidden
+        source_modules =
+            hexstrike.utils
+        forbidden_modules =
+            hexstrike.interfaces
+            hexstrike.services
+            hexstrike.domain
+            hexstrike.adapters
+            hexstrike.platform
+        EOF
+        
+        # Run import-linter
+        lint-imports

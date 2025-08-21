@@ -1,0 +1,34 @@
+name: Code Duplication Check
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  check-duplication:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16'
+        
+    - name: Install jscpd
+      run: npm install -g jscpd
+      
+    - name: Check for code duplication
+      run: |
+        echo "Checking for code duplication (threshold: 3%)..."
+        jscpd --threshold 3 --reporters html,console --mode strict --ignore "**/legacy/**" src/
+        
+    - name: Upload duplication report
+      uses: actions/upload-artifact@v3
+      with:
+        name: duplication-report
+        path: report/
