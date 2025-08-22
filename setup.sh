@@ -317,11 +317,12 @@ install_with_retry() {
     while [ $attempt -le $max_attempts ]; do
         log_with_timestamp "Attempting to install $tool_name (attempt $attempt/$max_attempts)"
         
-        if timeout 300 bash -c "$cmd" 2>/dev/null; then
+        if timeout 300 bash -c "$cmd"; then
             log_with_timestamp "✅ Successfully installed $tool_name"
             return 0
         else
             local exit_code=$?
+            echo -e "${RED}❌ Installation failed for $tool_name (exit code: $exit_code)${NC}"
             log_with_timestamp "❌ Installation attempt $attempt failed for $tool_name (exit code: $exit_code)" "WARN"
             
             if [ $attempt -lt $max_attempts ]; then
@@ -335,6 +336,48 @@ install_with_retry() {
     
     log_with_timestamp "🚫 Failed to install $tool_name after $max_attempts attempts" "ERROR"
     return 1
+}
+
+validate_package_availability() {
+    local tools="$1"
+    local validation_results=()
+    
+    echo -e "${BLUE}🔍 Validating package availability...${NC}"
+    
+    for tool in $tools; do
+        case $PKG_MANAGER in
+            "apt")
+                if apt-cache show "$tool" >/dev/null 2>&1; then
+                    echo -e "✅ ${GREEN}$tool${NC} - Available in repository"
+                    validation_results+=("$tool:AVAILABLE")
+                else
+                    echo -e "❌ ${RED}$tool${NC} - Not found in repository"
+                    validation_results+=("$tool:NOT_FOUND")
+                fi
+                ;;
+            "dnf")
+                if dnf info "$tool" >/dev/null 2>&1; then
+                    echo -e "✅ ${GREEN}$tool${NC} - Available in repository"
+                    validation_results+=("$tool:AVAILABLE")
+                else
+                    echo -e "❌ ${RED}$tool${NC} - Not found in repository"
+                    validation_results+=("$tool:NOT_FOUND")
+                fi
+                ;;
+            "pacman")
+                if pacman -Si "$tool" >/dev/null 2>&1; then
+                    echo -e "✅ ${GREEN}$tool${NC} - Available in repository"
+                    validation_results+=("$tool:AVAILABLE")
+                else
+                    echo -e "❌ ${RED}$tool${NC} - Not found in repository"
+                    validation_results+=("$tool:NOT_FOUND")
+                fi
+                ;;
+        esac
+    done
+    
+    echo ""
+    return 0
 }
 
 create_installation_checkpoint() {
@@ -380,8 +423,22 @@ install_package_manager_tools() {
         echo -e "${GREEN}✅ Package manager tools installed successfully${NC}"
         return 0
     else
-        echo -e "${RED}❌ Package manager installation failed${NC}"
-        return 1
+        echo -e "${RED}❌ Batch package installation failed, trying individual packages...${NC}"
+        local failed_packages=()
+        for tool in $tools; do
+            local individual_cmd="$INSTALL_CMD $tool"
+            if ! install_with_retry "$individual_cmd" "$tool"; then
+                failed_packages+=("$tool")
+            fi
+        done
+        
+        if [ ${#failed_packages[@]} -gt 0 ]; then
+            echo -e "${RED}❌ Failed to install: ${failed_packages[*]}${NC}"
+            return 1
+        else
+            echo -e "${GREEN}✅ All packages installed individually${NC}"
+            return 0
+        fi
     fi
 }
 
@@ -490,6 +547,10 @@ perform_automatic_installation() {
     
     if [ "$DRY_RUN" = true ]; then
         echo -e "${CYAN}🔍 DRY RUN MODE - No actual installations will be performed${NC}"
+        
+        if [ -n "$PKG_MANAGER_TOOLS" ]; then
+            validate_package_availability "$PKG_MANAGER_TOOLS"
+        fi
     fi
     
     local checkpoint_file
@@ -606,6 +667,51 @@ perform_automatic_installation() {
         log_with_timestamp "Installation completed with failures: ${FAILED_INSTALLS[*]}" "WARN"
     fi
     
+    echo ""
+    echo -e "${BLUE}🔍 Verifying installations...${NC}"
+    
+    local newly_installed=()
+    local still_missing=()
+    local tools_to_verify=()
+    
+    if [ -n "$PKG_MANAGER_TOOLS" ]; then
+        for tool in $PKG_MANAGER_TOOLS; do
+            tools_to_verify+=("$tool")
+        done
+    fi
+    if [ -n "$GO_TOOLS" ]; then
+        for tool_info in $GO_TOOLS; do
+            local tool=$(echo "$tool_info" | cut -d':' -f1)
+            tools_to_verify+=("$tool")
+        done
+    fi
+    if [ -n "$PIP_TOOLS" ]; then
+        for tool_info in $PIP_TOOLS; do
+            local tool=$(echo "$tool_info" | cut -d':' -f1)
+            tools_to_verify+=("$tool")
+        done
+    fi
+    
+    for tool in "${tools_to_verify[@]}"; do
+        if command -v "$tool" >/dev/null 2>&1; then
+            newly_installed+=("$tool")
+            echo -e "✅ ${GREEN}$tool${NC} - Successfully installed and verified"
+        else
+            still_missing+=("$tool")
+            echo -e "❌ ${RED}$tool${NC} - Still missing after installation attempt"
+        fi
+    done
+    
+    echo ""
+    if [ ${#newly_installed[@]} -gt 0 ]; then
+        echo -e "${GREEN}🎉 Successfully installed: ${newly_installed[*]}${NC}"
+    fi
+    
+    if [ ${#still_missing[@]} -gt 0 ]; then
+        echo -e "${RED}⚠️  Still missing: ${still_missing[*]}${NC}"
+        echo -e "${YELLOW}These tools may require manual installation or different package names${NC}"
+    fi
+
     if [ "$DRY_RUN" = false ]; then
         echo -e "${CYAN}📋 Installation checkpoint: $checkpoint_file${NC}"
         echo -e "${CYAN}📝 Full log: $LOG_FILE${NC}"
