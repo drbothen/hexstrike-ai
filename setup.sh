@@ -2,7 +2,9 @@
 
 # HexStrike AI - Official Tools Verification Script (Based on Official README)
 # Supports multiple Linux distributions with verified download links
-# Version 3.2 - Phase 2 Enhancements: Automatic installation, interactive mode, profiles, and advanced features
+# Version 3.0.0 - Production-grade upgrade with macOS support and enhanced idempotency
+
+set -euo pipefail
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -610,6 +612,23 @@ perform_automatic_installation() {
 
 # Detect Linux distribution
 detect_distro() {
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        DISTRO="macos"
+        VERSION=$(sw_vers -productVersion)
+        PRETTY_NAME="macOS $VERSION"
+        ARCH=$(uname -m)
+        case $ARCH in
+            x86_64) ARCH_TYPE="amd64" ;;
+            arm64) ARCH_TYPE="arm64" ;;
+            *) ARCH_TYPE="amd64" ;;
+        esac
+        echo -e "${BLUE}🍎 Detected OS: ${CYAN}$PRETTY_NAME${NC}"
+        echo -e "${BLUE}📋 Distribution: ${CYAN}$DISTRO${NC}"
+        echo -e "${BLUE}🏗️  Architecture: ${CYAN}$ARCH ($ARCH_TYPE)${NC}"
+        echo ""
+        return 0
+    fi
+    
     if [ -f /etc/os-release ]; then
         . /etc/os-release
         DISTRO=$ID
@@ -645,9 +664,14 @@ detect_distro() {
 # Get package manager and install commands based on distro
 get_package_manager() {
     case $DISTRO in
+        "macos")
+            PKG_MANAGER="brew"
+            INSTALL_CMD="brew install"
+            UPDATE_CMD="brew update"
+            ;;
         "ubuntu"|"debian"|"kali"|"parrot"|"mint")
             PKG_MANAGER="apt"
-            INSTALL_CMD="sudo apt update && sudo apt install -y"
+            INSTALL_CMD="sudo DEBIAN_FRONTEND=noninteractive apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y"
             UPDATE_CMD="sudo apt update"
             ;;
         "fedora"|"rhel"|"centos")
@@ -789,6 +813,23 @@ MISSING_TOOLS=()
 # Complete tool installation database based on HexStrike AI README
 declare -A TOOL_INSTALL_INFO
 init_complete_tool_database() {
+    TOOL_INSTALL_INFO["build-essential"]="pkg_manager|build-essential|Essential packages for building software"
+    TOOL_INSTALL_INFO["python3-dev"]="pkg_manager|python3-dev|Header files and static library for Python"
+    TOOL_INSTALL_INFO["python3-pip"]="pkg_manager|python3-pip|Python package installer"
+    TOOL_INSTALL_INFO["golang-go"]="pkg_manager|golang-go|Go programming language compiler"
+    TOOL_INSTALL_INFO["libssl-dev"]="pkg_manager|libssl-dev|Secure Sockets Layer toolkit - development files"
+    TOOL_INSTALL_INFO["libffi-dev"]="pkg_manager|libffi-dev|Foreign Function Interface library - development files"
+    TOOL_INSTALL_INFO["libpq-dev"]="pkg_manager|libpq-dev|PostgreSQL C client library - development files"
+    TOOL_INSTALL_INFO["zlib1g-dev"]="pkg_manager|zlib1g-dev|Compression library - development files"
+    TOOL_INSTALL_INFO["pkg-config"]="pkg_manager|pkg-config|Package configuration system"
+    TOOL_INSTALL_INFO["cmake"]="pkg_manager|cmake|Cross-platform build system"
+    TOOL_INSTALL_INFO["curl"]="pkg_manager|curl|Command line tool for transferring data"
+    TOOL_INSTALL_INFO["wget"]="pkg_manager|wget|Network downloader"
+    TOOL_INSTALL_INFO["git"]="pkg_manager|git|Distributed version control system"
+    TOOL_INSTALL_INFO["unzip"]="pkg_manager|unzip|Archive extraction utility"
+    TOOL_INSTALL_INFO["ca-certificates"]="pkg_manager|ca-certificates|Common CA certificates"
+    TOOL_INSTALL_INFO["software-properties-common"]="pkg_manager|software-properties-common|Software properties management"
+    
     # 🔍 Network Reconnaissance & Scanning (from README)
     TOOL_INSTALL_INFO["nmap"]="pkg_manager|nmap|Advanced port scanning with custom NSE scripts"
     TOOL_INSTALL_INFO["amass"]="go_install|github.com/owasp-amass/amass/v4/cmd/amass|Comprehensive subdomain enumeration and OSINT"
@@ -832,7 +873,7 @@ init_complete_tool_database() {
     TOOL_INSTALL_INFO["strings"]="pkg_manager|binutils|Extract printable strings from binaries"
     TOOL_INSTALL_INFO["objdump"]="pkg_manager|binutils|Display object file information"
     TOOL_INSTALL_INFO["ghidra"]="manual_download|https://github.com/NationalSecurityAgency/ghidra/releases|NSA's software reverse engineering suite"
-    TOOL_INSTALL_INFO["xxd"]="pkg_manager|xxd|Hex dump utility"
+    TOOL_INSTALL_INFO["xxd"]="pkg_manager|vim-common|Hex dump utility"
     
     # 🏆 Advanced CTF & Forensics Tools (from README)
     TOOL_INSTALL_INFO["volatility3"]="pip_install|volatility3|Advanced memory forensics framework"
@@ -844,11 +885,11 @@ init_complete_tool_database() {
     
     # ☁️ Cloud & Container Security (from README)
     TOOL_INSTALL_INFO["prowler"]="pip_install|prowler-cloud|AWS/Azure/GCP security assessment tool"
-    TOOL_INSTALL_INFO["trivy"]="github_release|https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.50.1_Linux-64bit.tar.gz|Comprehensive vulnerability scanner for containers"
+    TOOL_INSTALL_INFO["trivy"]="install_script|https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh|Comprehensive vulnerability scanner for containers"
     TOOL_INSTALL_INFO["scout-suite"]="pip_install|scoutsuite|Multi-cloud security auditing tool"
     TOOL_INSTALL_INFO["kube-hunter"]="pip_install|kube-hunter|Kubernetes penetration testing tool"
-    TOOL_INSTALL_INFO["kube-bench"]="github_release|https://github.com/aquasecurity/kube-bench/releases/latest/download/kube-bench_0.6.17_linux_amd64.tar.gz|CIS Kubernetes benchmark checker"
-    TOOL_INSTALL_INFO["cloudsploit"]="github_manual|https://github.com/aquasecurity/cloudsploit|Cloud security scanning and monitoring"
+    TOOL_INSTALL_INFO["kube-bench"]="github_manual|https://github.com/aquasecurity/kube-bench|CIS Kubernetes benchmark checker"
+    TOOL_INSTALL_INFO["cloudsploit"]="nodejs_manual|https://github.com/aquasecurity/cloudsploit|Cloud security scanning and monitoring"
     
     # 🔥 Bug Bounty & Reconnaissance Arsenal (from README)
     TOOL_INSTALL_INFO["hakrawler"]="go_install|github.com/hakluke/hakrawler|Fast web endpoint discovery and crawling"
@@ -874,6 +915,58 @@ init_complete_tool_database() {
     TOOL_INSTALL_INFO["hash-identifier"]="pkg_manager|hash-identifier|Hash type identifier"
     TOOL_INSTALL_INFO["ophcrack"]="pkg_manager|ophcrack|Windows password cracker"
     TOOL_INSTALL_INFO["rustscan"]="github_release|https://github.com/RustScan/RustScan/releases/latest/download/rustscan_2.1.1_amd64.deb|Ultra-fast port scanner"
+    
+    # Additional tools discovered from comprehensive source code analysis
+    TOOL_INSTALL_INFO["naabu"]="go_install|github.com/projectdiscovery/naabu/v2/cmd/naabu|Fast port scanner"
+    TOOL_INSTALL_INFO["assetfinder"]="go_install|github.com/tomnomnom/assetfinder|Subdomain discovery tool"
+    TOOL_INSTALL_INFO["findomain"]="github_release|https://github.com/Findomain/Findomain/releases/latest/download/findomain-linux|Cross-platform subdomain enumerator"
+    TOOL_INSTALL_INFO["gau"]="go_install|github.com/lc/gau/v2/cmd/gau|Get All URLs from web archives"
+    TOOL_INSTALL_INFO["waybackurls"]="go_install|github.com/tomnomnom/waybackurls|Fetch URLs from Wayback Machine"
+    TOOL_INSTALL_INFO["x8"]="github_manual|https://github.com/Sh1Yo/x8|Hidden parameter discovery tool"
+    TOOL_INSTALL_INFO["jaeles"]="go_install|github.com/jaeles-project/jaeles|Automated web application testing framework"
+    TOOL_INSTALL_INFO["dotdotpwn"]="github_manual|https://github.com/wireghoul/dotdotpwn|Directory traversal fuzzer"
+    TOOL_INSTALL_INFO["xsser"]="pkg_manager|xsser|Cross-site scripting detection and exploitation"
+    TOOL_INSTALL_INFO["wfuzz"]="pkg_manager|wfuzz|Web application fuzzer"
+    TOOL_INSTALL_INFO["nbtscan"]="pkg_manager|nbtscan|NetBIOS scanner"
+    TOOL_INSTALL_INFO["arp-scan"]="pkg_manager|arp-scan|ARP network scanner"
+    TOOL_INSTALL_INFO["bloodhound"]="manual_download|https://github.com/BloodHoundAD/BloodHound/releases|Active Directory attack path analysis"
+    TOOL_INSTALL_INFO["setoolkit"]="github_manual|https://github.com/trustedsec/social-engineer-toolkit|Social engineering toolkit"
+    TOOL_INSTALL_INFO["gophish"]="github_release|https://github.com/gophish/gophish/releases|Open-source phishing toolkit"
+    TOOL_INSTALL_INFO["mobsf"]="github_manual|https://github.com/MobSF/Mobile-Security-Framework-MobSF|Mobile security framework"
+    TOOL_INSTALL_INFO["frida"]="pip_install|frida-tools|Dynamic instrumentation toolkit"
+    TOOL_INSTALL_INFO["objection"]="pip_install|objection|Runtime mobile exploration toolkit"
+    TOOL_INSTALL_INFO["powershell-empire"]="github_manual|https://github.com/BC-SECURITY/Empire|PowerShell post-exploitation framework"
+    TOOL_INSTALL_INFO["covenant"]="github_manual|https://github.com/cobbr/Covenant|.NET command and control framework"
+    TOOL_INSTALL_INFO["cobalt-strike"]="commercial|https://www.cobaltstrike.com|Commercial adversary simulation platform"
+    TOOL_INSTALL_INFO["docker-bench-security"]="github_manual|https://github.com/docker/docker-bench-security|Docker security benchmark"
+    TOOL_INSTALL_INFO["clair"]="github_release|https://github.com/quay/clair/releases|Container vulnerability scanner"
+    TOOL_INSTALL_INFO["falco"]="install_script|https://falco.org/repo/falcosecurity-packages.asc|Runtime security monitoring"
+    TOOL_INSTALL_INFO["anew"]="go_install|github.com/tomnomnom/anew|Tool for adding new lines to files"
+    TOOL_INSTALL_INFO["qsreplace"]="go_install|github.com/tomnomnom/qsreplace|Query string parameter replacement"
+    TOOL_INSTALL_INFO["uro"]="pip_install|uro|URL filtering and deduplication tool"
+    TOOL_INSTALL_INFO["pwntools"]="pip_install|pwntools|CTF framework and exploit development library"
+    TOOL_INSTALL_INFO["one-gadget"]="gem_install|one_gadget|RCE gadget finder for libc"
+    TOOL_INSTALL_INFO["libc-database"]="github_manual|https://github.com/niklasb/libc-database|Libc offset database"
+    TOOL_INSTALL_INFO["gdb-peda"]="github_manual|https://github.com/longld/peda|Python Exploit Development Assistance for GDB"
+    TOOL_INSTALL_INFO["angr"]="pip_install|angr|Binary analysis platform"
+    TOOL_INSTALL_INFO["ropper"]="pip_install|ropper|ROP/JOP gadget finder"
+    TOOL_INSTALL_INFO["pwninit"]="github_release|https://github.com/io12/pwninit/releases|CTF pwn challenge setup tool"
+    
+    # Additional tools discovered from comprehensive source code analysis
+    TOOL_INSTALL_INFO["searchsploit"]="pkg_manager|exploitdb|Exploit database search tool"
+    TOOL_INSTALL_INFO["exploit-db"]="pkg_manager|exploitdb|Exploit database"
+    TOOL_INSTALL_INFO["shodan"]="pip_install|shodan|Search engine for Internet-connected devices"
+    TOOL_INSTALL_INFO["censys"]="pip_install|censys|Internet-wide scanning and analysis platform"
+    TOOL_INSTALL_INFO["ldapsearch"]="pkg_manager|ldap-utils|LDAP search utility"
+    TOOL_INSTALL_INFO["snmpwalk"]="pkg_manager|snmp|SNMP network monitoring tool"
+    TOOL_INSTALL_INFO["impacket"]="pkg_manager|impacket|Collection of Python classes for network protocols"
+    TOOL_INSTALL_INFO["wireshark"]="pkg_manager|wireshark|Network protocol analyzer"
+    TOOL_INSTALL_INFO["tcpdump"]="pkg_manager|tcpdump|Network packet analyzer"
+    TOOL_INSTALL_INFO["ngrep"]="pkg_manager|ngrep|Network packet analyzer with grep-like functionality"
+    TOOL_INSTALL_INFO["aircrack-ng"]="pkg_manager|aircrack-ng|Wireless network security assessment tool"
+    TOOL_INSTALL_INFO["reaver"]="pkg_manager|reaver|WPS brute force attack tool"
+    TOOL_INSTALL_INFO["kismet"]="pkg_manager|kismet|Wireless network detector and intrusion detection system"
+    TOOL_INSTALL_INFO["tshark"]="pkg_manager|tshark|Network protocol analyzer (command line)"
 }
 
 # Function to get package name based on distribution
@@ -881,6 +974,64 @@ get_package_name() {
     local tool=$1
     
     case $DISTRO in
+        "macos")
+            case $tool in
+                "build-essential") echo "" ;;
+                "python3-dev") echo "python3" ;;
+                "python3-pip") echo "python3-pip" ;;
+                "golang-go") echo "go" ;;
+                "libssl-dev") echo "openssl" ;;
+                "libffi-dev") echo "libffi" ;;
+                "libpq-dev") echo "libpq" ;;
+                "zlib1g-dev") echo "zlib" ;;
+                "software-properties-common") echo "" ;;
+                "theharvester") echo "theharvester" ;;
+                "evil-winrm") echo "evil-winrm" ;;
+                "exiftool") echo "libimage-exiftool-perl" ;;
+                "xxd") echo "vim-common" ;;
+                "subfinder") echo "subfinder" ;;
+                "nuclei") echo "nuclei" ;;
+                "ffuf") echo "ffuf" ;;
+                "ghidra") echo "ghidra" ;;
+                "volatility3") echo "volatility3" ;;
+                "john") echo "john-jumbo" ;;
+                "naabu") echo "naabu" ;;
+                "assetfinder") echo "assetfinder" ;;
+                "findomain") echo "findomain" ;;
+                "feroxbuster") echo "feroxbuster" ;;
+                "gau") echo "gau" ;;
+                "waybackurls") echo "waybackurls" ;;
+                "anew") echo "anew" ;;
+                "qsreplace") echo "qsreplace" ;;
+                "x8") echo "x8" ;;
+                "jaeles") echo "jaeles" ;;
+                "dalfox") echo "dalfox" ;;
+                "httpx") echo "httpx" ;;
+                "katana") echo "katana" ;;
+                "hakrawler") echo "hakrawler" ;;
+                "subjack") echo "subjack" ;;
+                "rustscan") echo "rustscan" ;;
+                "terrascan") echo "terrascan" ;;
+                "kube-bench") echo "kube-bench" ;;
+                "clair") echo "clair" ;;
+                "falco") echo "falco" ;;
+                "searchsploit") echo "exploitdb" ;;
+                "exploit-db") echo "exploitdb" ;;
+                "shodan") echo "shodan" ;;
+                "censys") echo "censys" ;;
+                "ldapsearch") echo "openldap" ;;
+                "snmpwalk") echo "net-snmp" ;;
+                "impacket") echo "impacket" ;;
+                "wireshark") echo "wireshark" ;;
+                "tcpdump") echo "tcpdump" ;;
+                "ngrep") echo "ngrep" ;;
+                "aircrack-ng") echo "aircrack-ng" ;;
+                "reaver") echo "reaver" ;;
+                "kismet") echo "kismet" ;;
+                "tshark") echo "wireshark" ;;
+                *) echo "$tool" ;;
+            esac
+            ;;
         "ubuntu"|"debian"|"kali"|"parrot"|"mint")
             case $tool in
                 "theharvester") echo "theharvester" ;;
@@ -894,12 +1045,33 @@ get_package_name() {
                 "zaproxy") echo "zaproxy" ;;
                 "sleuthkit") echo "sleuthkit" ;;
                 "metasploit-framework") echo "metasploit-framework" ;;
-                "xxd") echo "xxd" ;;
+                "xxd") echo "vim-common" ;;
+                "searchsploit") echo "exploitdb" ;;
+                "exploit-db") echo "exploitdb" ;;
+                "ldapsearch") echo "ldap-utils" ;;
+                "snmpwalk") echo "snmp" ;;
+                "impacket") echo "impacket" ;;
+                "wireshark") echo "wireshark" ;;
+                "tcpdump") echo "tcpdump" ;;
+                "ngrep") echo "ngrep" ;;
+                "aircrack-ng") echo "aircrack-ng" ;;
+                "reaver") echo "reaver" ;;
+                "kismet") echo "kismet" ;;
+                "tshark") echo "tshark" ;;
                 *) echo "$tool" ;;
             esac
             ;;
         "fedora"|"rhel"|"centos")
             case $tool in
+                "build-essential") echo "gcc gcc-c++ make" ;;
+                "python3-dev") echo "python3-devel" ;;
+                "golang-go") echo "golang" ;;
+                "libssl-dev") echo "openssl-devel" ;;
+                "libffi-dev") echo "libffi-devel" ;;
+                "libpq-dev") echo "postgresql-devel" ;;
+                "zlib1g-dev") echo "zlib-devel" ;;
+                "pkg-config") echo "pkgconfig" ;;
+                "software-properties-common") echo "" ;;
                 "theharvester") echo "theHarvester" ;;
                 "evil-winrm") echo "rubygem-evil-winrm" ;;
                 "enum4linux-ng") echo "enum4linux-ng" ;;
@@ -910,11 +1082,41 @@ get_package_name() {
                 "sleuthkit") echo "sleuthkit" ;;
                 "metasploit-framework") echo "metasploit" ;;
                 "xxd") echo "vim-common" ;;
+                "john") echo "john" ;;
+                "nbtscan") echo "nbtscan" ;;
+                "arp-scan") echo "arp-scan" ;;
+                "xsser") echo "xsser" ;;
+                "wfuzz") echo "wfuzz" ;;
+                "falco") echo "falco" ;;
+                "searchsploit") echo "" ;;
+                "exploit-db") echo "" ;;
+                "shodan") echo "" ;;
+                "censys") echo "" ;;
+                "ldapsearch") echo "openldap-clients" ;;
+                "snmpwalk") echo "net-snmp-utils" ;;
+                "impacket") echo "python3-impacket" ;;
+                "wireshark") echo "wireshark" ;;
+                "tcpdump") echo "tcpdump" ;;
+                "ngrep") echo "ngrep" ;;
+                "aircrack-ng") echo "aircrack-ng" ;;
+                "reaver") echo "reaver" ;;
+                "kismet") echo "kismet" ;;
+                "tshark") echo "wireshark" ;;
                 *) echo "$tool" ;;
             esac
             ;;
         "arch"|"manjaro"|"endeavouros")
             case $tool in
+                "build-essential") echo "base-devel" ;;
+                "python3-dev") echo "python" ;;
+                "python3-pip") echo "python-pip" ;;
+                "golang-go") echo "go" ;;
+                "libssl-dev") echo "openssl" ;;
+                "libffi-dev") echo "libffi" ;;
+                "libpq-dev") echo "postgresql-libs" ;;
+                "zlib1g-dev") echo "zlib" ;;
+                "pkg-config") echo "pkgconf" ;;
+                "software-properties-common") echo "" ;;
                 "theharvester") echo "theharvester" ;;
                 "evil-winrm") echo "evil-winrm" ;;
                 "hash-identifier") echo "hash-identifier" ;;
@@ -925,7 +1127,21 @@ get_package_name() {
                 "zaproxy") echo "zaproxy" ;;
                 "sleuthkit") echo "sleuthkit" ;;
                 "metasploit-framework") echo "metasploit" ;;
-                "xxd") echo "xxd" ;;
+                "xxd") echo "vim-common" ;;
+                "searchsploit") echo "" ;;
+                "exploit-db") echo "" ;;
+                "shodan") echo "" ;;
+                "censys") echo "" ;;
+                "ldapsearch") echo "openldap" ;;
+                "snmpwalk") echo "net-snmp" ;;
+                "impacket") echo "impacket" ;;
+                "wireshark") echo "wireshark-qt" ;;
+                "tcpdump") echo "tcpdump" ;;
+                "ngrep") echo "ngrep" ;;
+                "aircrack-ng") echo "aircrack-ng" ;;
+                "reaver") echo "reaver" ;;
+                "kismet") echo "kismet" ;;
+                "tshark") echo "wireshark-cli" ;;
                 *) echo "$tool" ;;
             esac
             ;;
@@ -957,6 +1173,29 @@ check_tool() {
         INSTALLED_COUNT=$((INSTALLED_COUNT + 1))
         return 0
     fi
+    
+    case $PKG_MANAGER in
+        "apt")
+            local package_name
+            package_name=$(get_package_name "$tool")
+            if [ -n "$package_name" ] && dpkg -s "$package_name" >/dev/null 2>&1; then
+                echo -e "✅ ${GREEN}$tool${NC} (package: $package_name) - ${GREEN}INSTALLED${NC}"
+                INSTALLED_TOOLS+=("$tool")
+                INSTALLED_COUNT=$((INSTALLED_COUNT + 1))
+                return 0
+            fi
+            ;;
+        "brew")
+            local package_name
+            package_name=$(get_package_name "$tool")
+            if [ -n "$package_name" ] && brew list "$package_name" >/dev/null 2>&1; then
+                echo -e "✅ ${GREEN}$tool${NC} (brew: $package_name) - ${GREEN}INSTALLED${NC}"
+                INSTALLED_TOOLS+=("$tool")
+                INSTALLED_COUNT=$((INSTALLED_COUNT + 1))
+                return 0
+            fi
+            ;;
+    esac
     
     # Check if it's a Python package that might be installed
     if python3 -c "import $tool" > /dev/null 2>&1; then
@@ -1228,18 +1467,50 @@ generate_verified_install_commands() {
     # HexStrike AI Official Installation Commands
     echo -e "${GREEN}🚀 HEXSTRIKE AI MEGA INSTALLATION COMMAND:${NC}"
     case $DISTRO in
-        "ubuntu"|"debian"|"kali"|"parrot"|"mint")
+        "macos")
+            echo "# System dependencies"
+            echo "xcode-select --install"
+            echo "brew install openssl libffi libpq zlib pkg-config cmake curl wget git unzip ca-certificates python3 python3-pip go"
+            echo ""
             echo "# Network & Recon tools"
-            echo "sudo apt update && sudo apt install -y nmap masscan amass fierce dnsenum theharvester responder"
+            echo "brew install nmap masscan amass subfinder nuclei"
             echo ""
             echo "# Web Application Security tools"
-            echo "sudo apt install -y gobuster ffuf dirb nikto sqlmap wpscan wafw00f zaproxy xsser wfuzz"
+            echo "brew install gobuster ffuf dirb nikto sqlmap wpscan zaproxy"
             echo ""
             echo "# Password & Authentication tools"  
-            echo "sudo apt install -y hydra john hashcat medusa patator evil-winrm hash-identifier ophcrack"
+            echo "brew install hydra john hashcat medusa"
             echo ""
             echo "# Binary Analysis & Reverse Engineering tools"
-            echo "sudo apt install -y gdb radare2 binwalk checksec binutils foremost steghide libimage-exiftool-perl sleuthkit xxd metasploit-framework"
+            echo "brew install gdb radare2 binwalk ghidra volatility3 exiftool xxd"
+            echo ""
+            echo "# Python packages"
+            echo "pip3 install autorecon ropgadget arjun crackmapexec netexec prowler-cloud scoutsuite kube-hunter smbmap"
+            echo ""
+            echo "# Go packages"
+            echo "go install github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest"
+            echo "go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest"
+            echo "go install github.com/projectdiscovery/httpx/cmd/httpx@latest"
+            echo "go install github.com/projectdiscovery/katana/cmd/katana@latest"
+            echo "go install github.com/hahwul/dalfox/v2@latest"
+            echo "go install github.com/hakluke/hakrawler@latest"
+            echo "go install github.com/haccer/subjack@latest"
+            ;;
+        "ubuntu"|"debian"|"kali"|"parrot"|"mint")
+            echo "# System dependencies"
+            echo "sudo DEBIAN_FRONTEND=noninteractive apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y build-essential python3-dev python3-pip golang-go libssl-dev libffi-dev libpq-dev zlib1g-dev pkg-config cmake curl wget git unzip ca-certificates software-properties-common"
+            echo ""
+            echo "# Network & Recon tools"
+            echo "sudo DEBIAN_FRONTEND=noninteractive apt install -y nmap masscan amass fierce dnsenum theharvester responder"
+            echo ""
+            echo "# Web Application Security tools"
+            echo "sudo DEBIAN_FRONTEND=noninteractive apt install -y gobuster ffuf dirb nikto sqlmap wpscan wafw00f zaproxy xsser wfuzz"
+            echo ""
+            echo "# Password & Authentication tools"  
+            echo "sudo DEBIAN_FRONTEND=noninteractive apt install -y hydra john hashcat medusa patator evil-winrm hash-identifier ophcrack"
+            echo ""
+            echo "# Binary Analysis & Reverse Engineering tools"
+            echo "sudo DEBIAN_FRONTEND=noninteractive apt install -y gdb radare2 binwalk checksec binutils foremost steghide libimage-exiftool-perl sleuthkit xxd metasploit-framework"
             echo ""
             echo "# Python packages"
             echo "pip3 install autorecon ropgadget arjun crackmapexec netexec volatility3 prowler-cloud scoutsuite kube-hunter smbmap"
@@ -1248,45 +1519,51 @@ generate_verified_install_commands() {
             echo "go install github.com/owasp-amass/amass/v4/cmd/amass@latest"
             echo "go install github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest"
             echo "go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest"
-           echo "go install github.com/projectdiscovery/httpx/cmd/httpx@latest"
-           echo "go install github.com/projectdiscovery/katana/cmd/katana@latest"
-           echo "go install github.com/hahwul/dalfox/v2@latest"
-           echo "go install github.com/hakluke/hakrawler@latest"
-           echo "go install github.com/haccer/subjack@latest"
-           ;;
-       "fedora"|"rhel"|"centos")
-           echo "# Network & Recon tools"
-           echo "sudo $PKG_MANAGER install -y nmap masscan dnsenum theHarvester"
-           echo ""
-           echo "# Web Application Security tools"
-           echo "sudo $PKG_MANAGER install -y gobuster ffuf dirb nikto sqlmap zaproxy wfuzz"
-           echo ""
-           echo "# Password & Authentication tools"
-           echo "sudo $PKG_MANAGER install -y hydra john hashcat medusa patator rubygem-evil-winrm ophcrack"
-           echo ""
-           echo "# Binary Analysis & Reverse Engineering tools"
-           echo "sudo $PKG_MANAGER install -y gdb radare2 binwalk binutils foremost steghide perl-Image-ExifTool sleuthkit vim-common"
-           echo ""
-           echo "# Python packages"
-           echo "pip3 install autorecon ropgadget arjun crackmapexec netexec volatility3 prowler-cloud scoutsuite kube-hunter smbmap"
-           ;;
-       "arch"|"manjaro"|"endeavouros")
-           echo "# Network & Recon tools"
-           echo "sudo pacman -S nmap masscan dnsenum theharvester"
-           echo ""
-           echo "# Web Application Security tools"
-           echo "sudo pacman -S gobuster ffuf dirb nikto sqlmap zaproxy wfuzz"
-           echo ""
-           echo "# Password & Authentication tools"
-           echo "sudo pacman -S hydra john hashcat medusa patator evil-winrm hash-identifier ophcrack"
-           echo ""
-           echo "# Binary Analysis & Reverse Engineering tools"
-           echo "sudo pacman -S gdb radare2 binwalk binutils foremost steghide perl-image-exiftool sleuthkit xxd metasploit"
-           echo ""
-           echo "# Python packages"
-           echo "pip3 install autorecon ropgadget arjun crackmapexec netexec volatility3 prowler-cloud scoutsuite kube-hunter smbmap"
-           ;;
-   esac
+            echo "go install github.com/projectdiscovery/httpx/cmd/httpx@latest"
+            echo "go install github.com/projectdiscovery/katana/cmd/katana@latest"
+            echo "go install github.com/hahwul/dalfox/v2@latest"
+            echo "go install github.com/hakluke/hakrawler@latest"
+            echo "go install github.com/haccer/subjack@latest"
+            ;;
+        "fedora"|"rhel"|"centos")
+            echo "# System dependencies"
+            echo "sudo $PKG_MANAGER install -y gcc gcc-c++ make python3-devel python3-pip golang openssl-devel libffi-devel postgresql-devel zlib-devel pkgconfig cmake curl wget git unzip ca-certificates"
+            echo ""
+            echo "# Network & Recon tools"
+            echo "sudo $PKG_MANAGER install -y nmap masscan dnsenum theHarvester"
+            echo ""
+            echo "# Web Application Security tools"
+            echo "sudo $PKG_MANAGER install -y gobuster ffuf dirb nikto sqlmap zaproxy wfuzz"
+            echo ""
+            echo "# Password & Authentication tools"
+            echo "sudo $PKG_MANAGER install -y hydra john hashcat medusa patator rubygem-evil-winrm ophcrack"
+            echo ""
+            echo "# Binary Analysis & Reverse Engineering tools"
+            echo "sudo $PKG_MANAGER install -y gdb radare2 binwalk binutils foremost steghide perl-Image-ExifTool sleuthkit vim-common"
+            echo ""
+            echo "# Python packages"
+            echo "pip3 install autorecon ropgadget arjun crackmapexec netexec volatility3 prowler-cloud scoutsuite kube-hunter smbmap"
+            ;;
+        "arch"|"manjaro"|"endeavouros")
+            echo "# System dependencies"
+            echo "sudo pacman -S base-devel python python-pip go openssl libffi postgresql-libs zlib pkgconf cmake curl wget git unzip ca-certificates"
+            echo ""
+            echo "# Network & Recon tools"
+            echo "sudo pacman -S nmap masscan dnsenum theharvester"
+            echo ""
+            echo "# Web Application Security tools"
+            echo "sudo pacman -S gobuster ffuf dirb nikto sqlmap zaproxy wfuzz"
+            echo ""
+            echo "# Password & Authentication tools"
+            echo "sudo pacman -S hydra john hashcat medusa patator evil-winrm hash-identifier ophcrack"
+            echo ""
+            echo "# Binary Analysis & Reverse Engineering tools"
+            echo "sudo pacman -S gdb radare2 binwalk binutils foremost steghide perl-image-exiftool sleuthkit xxd metasploit"
+            echo ""
+            echo "# Python packages"
+            echo "pip3 install autorecon ropgadget arjun crackmapexec netexec volatility3 prowler-cloud scoutsuite kube-hunter smbmap"
+            ;;
+    esac
    echo ""
 }
 
