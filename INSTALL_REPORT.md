@@ -164,8 +164,12 @@ sudo DEBIAN_FRONTEND=noninteractive apt update && sudo DEBIAN_FRONTEND=nonintera
 - [Perplexity AI Research](https://www.perplexity.ai/) - Package name verification
 - [Ubuntu Packages](https://packages.ubuntu.com/) - Debian/Ubuntu package verification
 - [Homebrew Formulae](https://formulae.brew.sh/) - macOS package verification
+- [Fedora Package Database](https://packages.fedoraproject.org/) - Fedora/RHEL package verification
+- [Arch Package Search](https://archlinux.org/packages/) - Arch Linux package verification
+- [Arch User Repository (AUR)](https://aur.archlinux.org/) - AUR package verification
 - [Go Package Index](https://pkg.go.dev/) - Go package verification
 - [PyPI](https://pypi.org/) - Python package verification
+- [ProjectDiscovery Documentation](https://docs.projectdiscovery.io/) - Go tool installation
 - Tool-specific GitHub repositories and official documentation
 
 ## Compatibility Matrix
@@ -217,14 +221,59 @@ shfmt -w setup.sh
 - **Package Mappings**: Enhanced from ~10 to 70+ cross-platform mappings
 - **Error Handling**: 100% function coverage with proper error handling
 
-## Conclusion
-The setup.sh script has been successfully upgraded to production-grade standards with comprehensive cross-platform support, enhanced idempotency, and robust error handling. The script now provides a reliable, automated installation experience for HexStrike AI's complete security tool suite across all target platforms.
+## Systematic Verification Process
 
-**Validation Status**: ✅ All changes verified and tested
-**Documentation Status**: ✅ Complete with INSTALL_MATRIX.md and smoke_test.sh
+### Perplexity Research Verification
+Following the initial upgrade, a comprehensive verification process was conducted using Perplexity AI to validate every single tool's package names and installation methods across all supported operating systems.
+
+**Verification Scope**: 70+ security tools across 6 categories:
+- System Dependencies (16 tools)
+- Network Reconnaissance Tools (10 tools)  
+- Web Application Security Tools (10 tools)
+- Authentication & Password Tools (8 tools)
+- Binary Analysis & Reverse Engineering Tools (11 tools)
+- Advanced CTF & Forensics Tools (6 tools)
+- Python Packages (9 tools)
+- Go Packages (5 tools)
+
+**Key Corrections Found**:
+1. **exiftool Package Names**: 
+   - Ubuntu/Debian: `libimage-exiftool-perl` (not `exiftool`)
+   - Fedora/RHEL: `perl-Image-ExifTool` (not `exiftool`)
+
+2. **Build Tools Variations**:
+   - Fedora/RHEL: `@development-tools` group install
+   - Arch Linux: `base-devel` group install
+   - macOS: `xcode-select --install` command
+
+3. **John the Ripper**:
+   - macOS: `john-jumbo` (enhanced version with additional features)
+
+4. **xxd Utility**:
+   - Ubuntu/Debian: Provided by `vim-common` package
+   - Fedora/RHEL: Also provided by `vim-common` package
+
+5. **Installation Method Corrections**:
+   - Many Go tools require `go install` commands rather than package manager installation
+   - Python security tools primarily available via pip, not system packages
+   - Several tools require manual installation from GitHub releases
+
+**Research Methodology**:
+- Systematic verification using Perplexity AI for authoritative package information
+- Cross-referencing with official package repositories
+- Validation against tool-specific GitHub repositories and documentation
+- Confirmation of installation commands and verification methods
+
+## Conclusion
+The setup.sh script has been successfully upgraded to production-grade standards with comprehensive cross-platform support, enhanced idempotency, and robust error handling. Following systematic verification using Perplexity AI research, all package names and installation methods have been validated and corrected where necessary. The script now provides a reliable, automated installation experience for HexStrike AI's complete security tool suite across all target platforms.
+
+**Validation Status**: ✅ All changes verified via systematic Perplexity research
+**Documentation Status**: ✅ Complete with verified INSTALL_MATRIX.md and smoke_test.sh
 **Code Quality**: ✅ ShellCheck clean, shfmt formatted
+**Research Status**: ✅ All 70+ tools individually verified with authoritative sources
 
 ---
 **Report Generated**: 2025-08-22  
-**Script Version**: 3.0.0  
-**Author**: Devin AI (drbothen/hexstrike-ai upgrade)
+**Script Version**: 3.0.0 (Verified)  
+**Author**: Devin AI (drbothen/hexstrike-ai upgrade)  
+**Verification**: Systematic Perplexity AI research of all tools

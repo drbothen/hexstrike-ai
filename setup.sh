@@ -873,7 +873,7 @@ init_complete_tool_database() {
     TOOL_INSTALL_INFO["strings"]="pkg_manager|binutils|Extract printable strings from binaries"
     TOOL_INSTALL_INFO["objdump"]="pkg_manager|binutils|Display object file information"
     TOOL_INSTALL_INFO["ghidra"]="manual_download|https://github.com/NationalSecurityAgency/ghidra/releases|NSA's software reverse engineering suite"
-    TOOL_INSTALL_INFO["xxd"]="pkg_manager|xxd|Hex dump utility"
+    TOOL_INSTALL_INFO["xxd"]="pkg_manager|vim-common|Hex dump utility"
     
     # 🏆 Advanced CTF & Forensics Tools (from README)
     TOOL_INSTALL_INFO["volatility3"]="pip_install|volatility3|Advanced memory forensics framework"
@@ -885,11 +885,11 @@ init_complete_tool_database() {
     
     # ☁️ Cloud & Container Security (from README)
     TOOL_INSTALL_INFO["prowler"]="pip_install|prowler-cloud|AWS/Azure/GCP security assessment tool"
-    TOOL_INSTALL_INFO["trivy"]="github_release|https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.50.1_Linux-64bit.tar.gz|Comprehensive vulnerability scanner for containers"
+    TOOL_INSTALL_INFO["trivy"]="install_script|https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh|Comprehensive vulnerability scanner for containers"
     TOOL_INSTALL_INFO["scout-suite"]="pip_install|scoutsuite|Multi-cloud security auditing tool"
     TOOL_INSTALL_INFO["kube-hunter"]="pip_install|kube-hunter|Kubernetes penetration testing tool"
-    TOOL_INSTALL_INFO["kube-bench"]="github_release|https://github.com/aquasecurity/kube-bench/releases/latest/download/kube-bench_0.6.17_linux_amd64.tar.gz|CIS Kubernetes benchmark checker"
-    TOOL_INSTALL_INFO["cloudsploit"]="github_manual|https://github.com/aquasecurity/cloudsploit|Cloud security scanning and monitoring"
+    TOOL_INSTALL_INFO["kube-bench"]="github_manual|https://github.com/aquasecurity/kube-bench|CIS Kubernetes benchmark checker"
+    TOOL_INSTALL_INFO["cloudsploit"]="nodejs_manual|https://github.com/aquasecurity/cloudsploit|Cloud security scanning and monitoring"
     
     # 🔥 Bug Bounty & Reconnaissance Arsenal (from README)
     TOOL_INSTALL_INFO["hakrawler"]="go_install|github.com/hakluke/hakrawler|Fast web endpoint discovery and crawling"
@@ -935,8 +935,8 @@ get_package_name() {
                 "software-properties-common") echo "" ;;
                 "theharvester") echo "theharvester" ;;
                 "evil-winrm") echo "evil-winrm" ;;
-                "exiftool") echo "exiftool" ;;
-                "xxd") echo "xxd" ;;
+                "exiftool") echo "libimage-exiftool-perl" ;;
+                "xxd") echo "vim-common" ;;
                 "subfinder") echo "subfinder" ;;
                 "nuclei") echo "nuclei" ;;
                 "ffuf") echo "ffuf" ;;
@@ -958,7 +958,7 @@ get_package_name() {
                 "zaproxy") echo "zaproxy" ;;
                 "sleuthkit") echo "sleuthkit" ;;
                 "metasploit-framework") echo "metasploit-framework" ;;
-                "xxd") echo "xxd" ;;
+                "xxd") echo "vim-common" ;;
                 *) echo "$tool" ;;
             esac
             ;;
@@ -1008,7 +1008,7 @@ get_package_name() {
                 "zaproxy") echo "zaproxy" ;;
                 "sleuthkit") echo "sleuthkit" ;;
                 "metasploit-framework") echo "metasploit" ;;
-                "xxd") echo "xxd" ;;
+                "xxd") echo "vim-common" ;;
                 *) echo "$tool" ;;
             esac
             ;;
