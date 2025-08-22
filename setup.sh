@@ -1239,7 +1239,7 @@ check_tool() {
 }
 
 verify_urls_parallel() {
-    local -n url_results=$1
+    local -n results_ref=$1
     shift
     local urls=("$@")
     local pids=()
@@ -1275,9 +1275,9 @@ verify_urls_parallel() {
     i=0
     for url in "${urls[@]}"; do
         if [ -f "$temp_dir/result_$i" ]; then
-            url_results["$url"]=$(cat "$temp_dir/result_$i")
+            results_ref["$url"]=$(cat "$temp_dir/result_$i")
         else
-            url_results["$url"]="FAILED"
+            results_ref["$url"]="FAILED"
         fi
         ((i++))
     done
@@ -1286,7 +1286,7 @@ verify_urls_parallel() {
     
     local success_count=0
     local failed_count=0
-    for result in "${url_results[@]}"; do
+    for result in "${results_ref[@]}"; do
         if [ "$result" = "SUCCESS" ]; then
             ((success_count++))
         else
