@@ -547,10 +547,6 @@ perform_automatic_installation() {
     
     if [ "$DRY_RUN" = true ]; then
         echo -e "${CYAN}🔍 DRY RUN MODE - No actual installations will be performed${NC}"
-        
-        if [ -n "$PKG_MANAGER_TOOLS" ]; then
-            validate_package_availability "$PKG_MANAGER_TOOLS"
-        fi
     fi
     
     local checkpoint_file
@@ -622,6 +618,11 @@ perform_automatic_installation() {
             esac
         fi
     done
+    
+    if [ "$DRY_RUN" = true ] && [ -n "$PKG_MANAGER_TOOLS" ]; then
+        validate_package_availability "$PKG_MANAGER_TOOLS"
+        echo -e "${CYAN}Commands that would be executed:${NC}"
+    fi
     
     local install_success=true
     
