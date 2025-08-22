@@ -36,6 +36,10 @@ parse_arguments() {
                 shift
                 ;;
             --profile)
+                if [[ $# -lt 2 ]]; then
+                    echo "Error: --profile requires a profile name"
+                    exit 1
+                fi
                 PROFILE="$2"
                 shift 2
                 ;;
@@ -1154,7 +1158,7 @@ get_package_name() {
 # Function to check if a command exists
 check_tool() {
     local tool=$1
-    local alt_check=$2
+    local alt_check=${2:-""}
     
     TOTAL_COUNT=$((TOTAL_COUNT + 1))
     
