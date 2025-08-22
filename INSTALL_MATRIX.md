@@ -165,4 +165,42 @@ This document provides comprehensive installation information for all security t
 - [ProjectDiscovery Documentation](https://docs.projectdiscovery.io/)
 - Tool-specific GitHub repositories and official documentation
 
+## Network Analysis & Monitoring Tools
+
+| Tool | Ubuntu/Debian | macOS | Install Command | Verification | Description |
+|------|---------------|-------|-----------------|--------------|-------------|
+| **wireshark** | wireshark | wireshark | `apt install wireshark` / `brew install wireshark` | `wireshark --version` | Network protocol analyzer |
+| **tshark** | tshark | wireshark | `apt install tshark` / `brew install wireshark` | `tshark --version` | Network protocol analyzer (command line) |
+| **tcpdump** | tcpdump | tcpdump | `apt install tcpdump` / `brew install tcpdump` | `tcpdump --version` | Network packet analyzer |
+| **ngrep** | ngrep | ngrep | `apt install ngrep` / `brew install ngrep` | `ngrep -V` | Network packet analyzer with grep-like functionality |
+| **aircrack-ng** | aircrack-ng | aircrack-ng | `apt install aircrack-ng` / `brew install aircrack-ng` | `aircrack-ng --version` | Wireless network security assessment tool |
+| **reaver** | reaver | reaver | `apt install reaver` / `brew install reaver` | `reaver --version` | WPS brute force attack tool |
+| **kismet** | kismet | kismet | `apt install kismet` / `brew install kismet` | `kismet --version` | Wireless network detector and intrusion detection system |
+
+## Exploit & Vulnerability Research Tools
+
+| Tool | Ubuntu/Debian | macOS | Install Command | Verification | Description |
+|------|---------------|-------|-----------------|--------------|-------------|
+| **searchsploit** | exploitdb | exploitdb | `apt install exploitdb` / `brew install exploitdb` | `searchsploit --version` | Exploit database search tool |
+| **exploit-db** | exploitdb | exploitdb | `apt install exploitdb` / `brew install exploitdb` | `searchsploit --version` | Exploit database |
+
+## Information Gathering & OSINT Tools
+
+| Tool | Ubuntu/Debian | macOS | Install Command | Verification | Description |
+|------|---------------|-------|-----------------|--------------|-------------|
+| **shodan** | pip install | shodan | `pip install shodan` / `brew install shodan` | `shodan --version` | Search engine for Internet-connected devices |
+| **censys** | pip install | censys | `pip install censys` / `brew install censys` | `censys --version` | Internet-wide scanning and analysis platform |
+| **ldapsearch** | ldap-utils | openldap | `apt install ldap-utils` / `brew install openldap` | `ldapsearch -VV` | LDAP search utility |
+| **snmpwalk** | snmp | net-snmp | `apt install snmp` / `brew install net-snmp` | `snmpwalk -V` | SNMP network monitoring tool |
+| **impacket** | impacket | impacket | `apt install impacket` / `brew install impacket` | `impacket-smbclient --version` | Collection of Python classes for network protocols |
+
+**Additional Sources:**
+- Wireshark: [Official site](https://www.wireshark.org/), [Ubuntu packages](https://packages.ubuntu.com/search?keywords=wireshark)
+- Tcpdump: [Official site](https://www.tcpdump.org/), [Ubuntu packages](https://packages.ubuntu.com/search?keywords=tcpdump)
+- Aircrack-ng: [Official site](https://www.aircrack-ng.org/), [Ubuntu packages](https://packages.ubuntu.com/search?keywords=aircrack-ng)
+- Searchsploit: [Exploit-DB](https://www.exploit-db.com/searchsploit), [Ubuntu packages](https://packages.ubuntu.com/search?keywords=exploitdb)
+- Shodan: [Official site](https://shodan.io/), [PyPI](https://pypi.org/project/shodan/)
+- Censys: [Official site](https://censys.io/), [PyPI](https://pypi.org/project/censys/)
+- Impacket: [GitHub](https://github.com/SecureAuthCorp/impacket), [Ubuntu packages](https://packages.ubuntu.com/search?keywords=impacket)
+
 Last Updated: 2025-08-22 (Verified via Perplexity Research)

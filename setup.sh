@@ -951,6 +951,22 @@ init_complete_tool_database() {
     TOOL_INSTALL_INFO["angr"]="pip_install|angr|Binary analysis platform"
     TOOL_INSTALL_INFO["ropper"]="pip_install|ropper|ROP/JOP gadget finder"
     TOOL_INSTALL_INFO["pwninit"]="github_release|https://github.com/io12/pwninit/releases|CTF pwn challenge setup tool"
+    
+    # Additional tools discovered from comprehensive source code analysis
+    TOOL_INSTALL_INFO["searchsploit"]="pkg_manager|exploitdb|Exploit database search tool"
+    TOOL_INSTALL_INFO["exploit-db"]="pkg_manager|exploitdb|Exploit database"
+    TOOL_INSTALL_INFO["shodan"]="pip_install|shodan|Search engine for Internet-connected devices"
+    TOOL_INSTALL_INFO["censys"]="pip_install|censys|Internet-wide scanning and analysis platform"
+    TOOL_INSTALL_INFO["ldapsearch"]="pkg_manager|ldap-utils|LDAP search utility"
+    TOOL_INSTALL_INFO["snmpwalk"]="pkg_manager|snmp|SNMP network monitoring tool"
+    TOOL_INSTALL_INFO["impacket"]="pkg_manager|impacket|Collection of Python classes for network protocols"
+    TOOL_INSTALL_INFO["wireshark"]="pkg_manager|wireshark|Network protocol analyzer"
+    TOOL_INSTALL_INFO["tcpdump"]="pkg_manager|tcpdump|Network packet analyzer"
+    TOOL_INSTALL_INFO["ngrep"]="pkg_manager|ngrep|Network packet analyzer with grep-like functionality"
+    TOOL_INSTALL_INFO["aircrack-ng"]="pkg_manager|aircrack-ng|Wireless network security assessment tool"
+    TOOL_INSTALL_INFO["reaver"]="pkg_manager|reaver|WPS brute force attack tool"
+    TOOL_INSTALL_INFO["kismet"]="pkg_manager|kismet|Wireless network detector and intrusion detection system"
+    TOOL_INSTALL_INFO["tshark"]="pkg_manager|tshark|Network protocol analyzer (command line)"
 }
 
 # Function to get package name based on distribution
@@ -999,6 +1015,20 @@ get_package_name() {
                 "kube-bench") echo "kube-bench" ;;
                 "clair") echo "clair" ;;
                 "falco") echo "falco" ;;
+                "searchsploit") echo "exploitdb" ;;
+                "exploit-db") echo "exploitdb" ;;
+                "shodan") echo "shodan" ;;
+                "censys") echo "censys" ;;
+                "ldapsearch") echo "openldap" ;;
+                "snmpwalk") echo "net-snmp" ;;
+                "impacket") echo "impacket" ;;
+                "wireshark") echo "wireshark" ;;
+                "tcpdump") echo "tcpdump" ;;
+                "ngrep") echo "ngrep" ;;
+                "aircrack-ng") echo "aircrack-ng" ;;
+                "reaver") echo "reaver" ;;
+                "kismet") echo "kismet" ;;
+                "tshark") echo "wireshark" ;;
                 *) echo "$tool" ;;
             esac
             ;;
@@ -1016,6 +1046,18 @@ get_package_name() {
                 "sleuthkit") echo "sleuthkit" ;;
                 "metasploit-framework") echo "metasploit-framework" ;;
                 "xxd") echo "vim-common" ;;
+                "searchsploit") echo "exploitdb" ;;
+                "exploit-db") echo "exploitdb" ;;
+                "ldapsearch") echo "ldap-utils" ;;
+                "snmpwalk") echo "snmp" ;;
+                "impacket") echo "impacket" ;;
+                "wireshark") echo "wireshark" ;;
+                "tcpdump") echo "tcpdump" ;;
+                "ngrep") echo "ngrep" ;;
+                "aircrack-ng") echo "aircrack-ng" ;;
+                "reaver") echo "reaver" ;;
+                "kismet") echo "kismet" ;;
+                "tshark") echo "tshark" ;;
                 *) echo "$tool" ;;
             esac
             ;;
@@ -1046,6 +1088,20 @@ get_package_name() {
                 "xsser") echo "xsser" ;;
                 "wfuzz") echo "wfuzz" ;;
                 "falco") echo "falco" ;;
+                "searchsploit") echo "" ;;
+                "exploit-db") echo "" ;;
+                "shodan") echo "" ;;
+                "censys") echo "" ;;
+                "ldapsearch") echo "openldap-clients" ;;
+                "snmpwalk") echo "net-snmp-utils" ;;
+                "impacket") echo "python3-impacket" ;;
+                "wireshark") echo "wireshark" ;;
+                "tcpdump") echo "tcpdump" ;;
+                "ngrep") echo "ngrep" ;;
+                "aircrack-ng") echo "aircrack-ng" ;;
+                "reaver") echo "reaver" ;;
+                "kismet") echo "kismet" ;;
+                "tshark") echo "wireshark" ;;
                 *) echo "$tool" ;;
             esac
             ;;
@@ -1072,6 +1128,20 @@ get_package_name() {
                 "sleuthkit") echo "sleuthkit" ;;
                 "metasploit-framework") echo "metasploit" ;;
                 "xxd") echo "vim-common" ;;
+                "searchsploit") echo "" ;;
+                "exploit-db") echo "" ;;
+                "shodan") echo "" ;;
+                "censys") echo "" ;;
+                "ldapsearch") echo "openldap" ;;
+                "snmpwalk") echo "net-snmp" ;;
+                "impacket") echo "impacket" ;;
+                "wireshark") echo "wireshark-qt" ;;
+                "tcpdump") echo "tcpdump" ;;
+                "ngrep") echo "ngrep" ;;
+                "aircrack-ng") echo "aircrack-ng" ;;
+                "reaver") echo "reaver" ;;
+                "kismet") echo "kismet" ;;
+                "tshark") echo "wireshark-cli" ;;
                 *) echo "$tool" ;;
             esac
             ;;

@@ -203,6 +203,161 @@ echo -e "${BLUE}🏆 Testing Advanced CTF & Forensics Tools${NC}"
 echo "------------------------------------------"
 test_tool "autopsy" "autopsy --version" "Digital forensics platform"
 test_tool "hashpump" "hashpump --version" "Hash length extension attack tool"
+test_wireshark() {
+    log_info "Testing wireshark..."
+    if command -v wireshark >/dev/null 2>&1; then
+        wireshark --version >/dev/null 2>&1
+        log_pass "wireshark"
+    else
+        log_fail "wireshark not found"
+    fi
+}
+
+test_tshark() {
+    log_info "Testing tshark..."
+    if command -v tshark >/dev/null 2>&1; then
+        tshark --version >/dev/null 2>&1
+        log_pass "tshark"
+    else
+        log_fail "tshark not found"
+    fi
+}
+
+test_tcpdump() {
+    log_info "Testing tcpdump..."
+    if command -v tcpdump >/dev/null 2>&1; then
+        tcpdump --version >/dev/null 2>&1
+        log_pass "tcpdump"
+    else
+        log_fail "tcpdump not found"
+    fi
+}
+
+test_ngrep() {
+    log_info "Testing ngrep..."
+    if command -v ngrep >/dev/null 2>&1; then
+        ngrep -V >/dev/null 2>&1
+        log_pass "ngrep"
+    else
+        log_fail "ngrep not found"
+    fi
+}
+
+test_aircrack_ng() {
+    log_info "Testing aircrack-ng..."
+    if command -v aircrack-ng >/dev/null 2>&1; then
+        aircrack-ng --version >/dev/null 2>&1
+        log_pass "aircrack-ng"
+    else
+        log_fail "aircrack-ng not found"
+    fi
+}
+
+test_reaver() {
+    log_info "Testing reaver..."
+    if command -v reaver >/dev/null 2>&1; then
+        reaver --version >/dev/null 2>&1
+        log_pass "reaver"
+    else
+        log_fail "reaver not found"
+    fi
+}
+
+test_kismet() {
+    log_info "Testing kismet..."
+    if command -v kismet >/dev/null 2>&1; then
+        kismet --version >/dev/null 2>&1
+        log_pass "kismet"
+    else
+        log_fail "kismet not found"
+    fi
+}
+
+test_searchsploit() {
+    log_info "Testing searchsploit..."
+    if command -v searchsploit >/dev/null 2>&1; then
+        searchsploit --version >/dev/null 2>&1
+        log_pass "searchsploit"
+    else
+        log_fail "searchsploit not found"
+    fi
+}
+
+test_shodan() {
+    log_info "Testing shodan..."
+    if command -v shodan >/dev/null 2>&1; then
+        shodan --version >/dev/null 2>&1
+        log_pass "shodan"
+    else
+        log_fail "shodan not found"
+    fi
+}
+
+test_censys() {
+    log_info "Testing censys..."
+    if command -v censys >/dev/null 2>&1; then
+        censys --version >/dev/null 2>&1
+        log_pass "censys"
+    else
+        log_fail "censys not found"
+    fi
+}
+
+test_ldapsearch() {
+    log_info "Testing ldapsearch..."
+    if command -v ldapsearch >/dev/null 2>&1; then
+        ldapsearch -VV >/dev/null 2>&1
+        log_pass "ldapsearch"
+    else
+        log_fail "ldapsearch not found"
+    fi
+}
+
+test_snmpwalk() {
+    log_info "Testing snmpwalk..."
+    if command -v snmpwalk >/dev/null 2>&1; then
+        snmpwalk -V >/dev/null 2>&1
+        log_pass "snmpwalk"
+    else
+        log_fail "snmpwalk not found"
+    fi
+}
+
+test_impacket() {
+    log_info "Testing impacket..."
+    if command -v impacket-smbclient >/dev/null 2>&1; then
+        impacket-smbclient --version >/dev/null 2>&1
+        log_pass "impacket"
+    else
+        log_fail "impacket not found"
+    fi
+}
+
+echo ""
+
+echo -e "${BLUE}📡 Testing Network Analysis & Monitoring Tools${NC}"
+echo "-----------------------------------------------"
+test_wireshark
+test_tshark
+test_tcpdump
+test_ngrep
+test_aircrack_ng
+test_reaver
+test_kismet
+echo ""
+
+echo -e "${BLUE}🔍 Testing Exploit & Vulnerability Research Tools${NC}"
+echo "-------------------------------------------------"
+test_searchsploit
+echo ""
+
+echo -e "${BLUE}🕵️ Testing OSINT & Information Gathering Tools${NC}"
+echo "-----------------------------------------------"
+test_shodan
+test_censys
+test_ldapsearch
+test_snmpwalk
+test_impacket
 echo ""
 
 echo -e "${CYAN}📊 Test Summary${NC}"

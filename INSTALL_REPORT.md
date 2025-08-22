@@ -6,7 +6,7 @@ This report documents the comprehensive upgrade of the `setup.sh` script from ve
 ## Executive Summary
 - **Scope**: Complete audit and upgrade of setup.sh for production use
 - **Platforms Added**: macOS support via Homebrew
-- **Tools Covered**: 70+ security tools plus 16 system dependencies
+- **Tools Covered**: 85+ security tools plus 16 system dependencies
 - **Key Improvements**: Idempotency, error handling, cross-platform support, comprehensive documentation
 
 ## Major Changes
@@ -273,6 +273,26 @@ The setup.sh script has been successfully upgraded to production-grade standards
 **Research Status**: ✅ All 70+ tools individually verified with authoritative sources
 
 ---
+### Comprehensive Source Code Analysis (Latest Update)
+
+A thorough analysis of the HexStrike source code was conducted to identify all tools referenced in the codebase. This analysis examined:
+
+- All comprehensive tool endpoint files (`comprehensive_tool_endpoints*.py`)
+- Individual tool endpoint modules (`tool_endpoints*.py`)
+- Service files and execution handlers
+- Route registrations and API endpoints
+- Tool definitions and configurations
+
+**Additional Tools Discovered:**
+- Network analysis tools: wireshark, tshark, tcpdump, ngrep
+- Wireless security tools: aircrack-ng, reaver, kismet
+- Exploit research tools: searchsploit, exploit-db
+- OSINT tools: shodan, censys
+- Network utilities: ldapsearch, snmpwalk
+- Protocol analysis: impacket
+
+**Total Tool Coverage:** 85+ security tools across all categories, ensuring complete installation support for all tools implemented in the HexStrike platform.
+
 **Report Generated**: 2025-08-22  
 **Script Version**: 3.0.0 (Verified)  
 **Author**: Devin AI (drbothen/hexstrike-ai upgrade)  
