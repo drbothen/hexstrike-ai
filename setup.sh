@@ -541,7 +541,7 @@ perform_automatic_installation() {
         local tool=$(echo "$missing" | cut -d':' -f1)
         local package=$(echo "$missing" | cut -d':' -f2)
         
-        if [ -n "${TOOL_INSTALL_INFO[$tool]}" ]; then
+        if [[ -v "TOOL_INSTALL_INFO[$tool]" ]] && [ -n "${TOOL_INSTALL_INFO[$tool]}" ]; then
             IFS='|' read -r install_type install_info description <<< "${TOOL_INSTALL_INFO[$tool]}"
             
             case $install_type in
@@ -1322,7 +1322,7 @@ generate_verified_install_commands() {
         local tool=$(echo "$missing" | cut -d':' -f1)
         local package=$(echo "$missing" | cut -d':' -f2)
         
-        if [ -n "${TOOL_INSTALL_INFO[$tool]}" ]; then
+        if [[ -v "TOOL_INSTALL_INFO[$tool]" ]] && [ -n "${TOOL_INSTALL_INFO[$tool]}" ]; then
             IFS='|' read -r install_type install_info description <<< "${TOOL_INSTALL_INFO[$tool]}"
             
             case $install_type in
@@ -1351,7 +1351,7 @@ generate_verified_install_commands() {
         ((current_tool++))
         show_progress $current_tool $MISSING_COUNT "Processing tools"
         
-        if [ -n "${TOOL_INSTALL_INFO[$tool]}" ]; then
+        if [[ -v "TOOL_INSTALL_INFO[$tool]" ]] && [ -n "${TOOL_INSTALL_INFO[$tool]}" ]; then
             IFS='|' read -r install_type install_info description <<< "${TOOL_INSTALL_INFO[$tool]}"
             
             case $install_type in
@@ -1607,99 +1607,99 @@ fi
 
 echo -e "${MAGENTA}🔍 Network Reconnaissance & Scanning Tools${NC}"
 echo "================================================"
-check_tool "nmap"
-check_tool "amass"
-check_tool "subfinder"
-check_tool "nuclei"
-check_tool "autorecon"
-check_tool "fierce"
-check_tool "masscan"
-check_tool "theharvester"
-check_tool "responder"
-check_tool "netexec" "nxc"
-check_tool "enum4linux-ng"
-check_tool "dnsenum"
-check_tool "rustscan"
+check_tool "nmap" || true
+check_tool "amass" || true
+check_tool "subfinder" || true
+check_tool "nuclei" || true
+check_tool "autorecon" || true
+check_tool "fierce" || true
+check_tool "masscan" || true
+check_tool "theharvester" || true
+check_tool "responder" || true
+check_tool "netexec" "nxc" || true
+check_tool "enum4linux-ng" || true
+check_tool "dnsenum" || true
+check_tool "rustscan" || true
 echo ""
 
 echo -e "${MAGENTA}🌐 Web Application Security Testing Tools${NC}"
 echo "================================================"
-check_tool "gobuster"
-check_tool "ffuf"
-check_tool "dirb"
-check_tool "nikto"
-check_tool "sqlmap"
-check_tool "wpscan"
-check_tool "burpsuite"
-check_tool "zaproxy" "zap"
-check_tool "arjun"
-check_tool "wafw00f"
-check_tool "feroxbuster"
-check_tool "dotdotpwn"
-check_tool "xsser"
-check_tool "wfuzz"
-check_tool "dirsearch"
-check_tool "katana"
-check_tool "dalfox"
+check_tool "gobuster" || true
+check_tool "ffuf" || true
+check_tool "dirb" || true
+check_tool "nikto" || true
+check_tool "sqlmap" || true
+check_tool "wpscan" || true
+check_tool "burpsuite" || true
+check_tool "zaproxy" "zap" || true
+check_tool "arjun" || true
+check_tool "wafw00f" || true
+check_tool "feroxbuster" || true
+check_tool "dotdotpwn" || true
+check_tool "xsser" || true
+check_tool "wfuzz" || true
+check_tool "dirsearch" || true
+check_tool "katana" || true
+check_tool "dalfox" || true
 echo ""
 
 echo -e "${MAGENTA}🔐 Authentication & Password Security Tools${NC}"
 echo "================================================"
-check_tool "hydra"
-check_tool "john"
-check_tool "hashcat"
-check_tool "medusa"
-check_tool "patator"
-check_tool "crackmapexec" "cme"
-check_tool "evil-winrm"
-check_tool "hash-identifier"
-check_tool "ophcrack"
+check_tool "hydra" || true
+check_tool "john" || true
+check_tool "hashcat" || true
+check_tool "medusa" || true
+check_tool "patator" || true
+check_tool "crackmapexec" "cme" || true
+check_tool "evil-winrm" || true
+check_tool "hash-identifier" || true
+check_tool "ophcrack" || true
 echo ""
 
 echo -e "${MAGENTA}🔬 Binary Analysis & Reverse Engineering Tools${NC}"
 echo "================================================"
-check_tool "gdb"
-check_tool "radare2" "r2"
-check_tool "binwalk"
-check_tool "ropgadget"
-check_tool "checksec"
-check_tool "strings"
-check_tool "objdump"
-check_tool "ghidra"
-check_tool "xxd"
-check_tool "msfvenom"
-check_tool "msfconsole"
-check_tool "smbmap"
+check_tool "gdb" || true
+check_tool "radare2" "r2" || true
+check_tool "binwalk" || true
+check_tool "ropgadget" || true
+check_tool "checksec" || true
+check_tool "strings" || true
+check_tool "objdump" || true
+check_tool "ghidra" || true
+check_tool "xxd" || true
+check_tool "msfvenom" || true
+check_tool "msfconsole" || true
+check_tool "smbmap" || true
 echo ""
 
 echo -e "${MAGENTA}🏆 Advanced CTF & Forensics Tools${NC}"
 echo "================================================"
-check_tool "volatility3" "vol3"
-check_tool "foremost"
-check_tool "steghide"
-check_tool "exiftool"
-check_tool "hashpump"
-check_tool "autopsy"
-check_tool "sleuthkit"
+check_tool "volatility3" "vol3" || true
+check_tool "foremost" || true
+check_tool "steghide" || true
+check_tool "exiftool" || true
+check_tool "hashpump" || true
+check_tool "autopsy" || true
+check_tool "sleuthkit" || true
 echo ""
 
 echo -e "${MAGENTA}☁️ Cloud & Container Security Tools${NC}"
 echo "================================================"
-check_tool "prowler"
-check_tool "trivy"
-check_tool "scout-suite"
-check_tool "kube-hunter"
-check_tool "kube-bench"
-check_tool "cloudsploit"
+check_tool "prowler" || true
+check_tool "trivy" || true
+check_tool "scout-suite" || true
+check_tool "kube-hunter" || true
+check_tool "kube-bench" || true
+check_tool "cloudsploit" || true
 echo ""
 
 echo -e "${MAGENTA}🔥 Bug Bounty & Reconnaissance Arsenal${NC}"
 echo "================================================"
-check_tool "hakrawler"
-check_tool "httpx"
-check_tool "paramspider"
-check_tool "aquatone"
-check_tool "subjack"
+check_tool "hakrawler" || true
+check_tool "httpx" || true
+check_tool "paramspider" || true
+check_tool "aquatone" || true
+check_tool "subjack" || true
 echo ""
 
 # Summary
