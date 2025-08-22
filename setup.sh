@@ -2,7 +2,7 @@
 
 # HexStrike AI - Official Tools Verification Script (Based on Official README)
 # Supports multiple Linux distributions with verified download links
-# Version 3.1 - Phase 1 Enhancements: Error handling, parallel processing, system validation, logging
+# Version 3.2 - Phase 2 Enhancements: Automatic installation, interactive mode, profiles, and advanced features
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -13,6 +13,103 @@ CYAN='\033[0;36m'
 WHITE='\033[1;37m'
 ORANGE='\033[0;33m'
 NC='\033[0m' # No Color
+
+INSTALL_MODE=false
+INTERACTIVE_MODE=false
+PROFILE=""
+DRY_RUN=false
+ESSENTIAL_ONLY=false
+CI_MODE=false
+HELP_MODE=false
+
+parse_arguments() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --install)
+                INSTALL_MODE=true
+                shift
+                ;;
+            --interactive)
+                INTERACTIVE_MODE=true
+                shift
+                ;;
+            --profile)
+                PROFILE="$2"
+                shift 2
+                ;;
+            --dry-run)
+                DRY_RUN=true
+                shift
+                ;;
+            --essential-only)
+                ESSENTIAL_ONLY=true
+                shift
+                ;;
+            --ci-mode)
+                CI_MODE=true
+                LOG_TO_FILE=false
+                shift
+                ;;
+            --help|-h)
+                HELP_MODE=true
+                shift
+                ;;
+            --debug)
+                LOG_LEVEL="DEBUG"
+                shift
+                ;;
+            *)
+                echo -e "${RED}Unknown option: $1${NC}"
+                echo "Use --help for usage information"
+                exit 1
+                ;;
+        esac
+    done
+}
+
+show_help() {
+    cat << 'EOF'
+HexStrike AI Setup Script v3.2 - Automatic Installation & Management
+
+USAGE:
+    ./setup.sh [OPTIONS]
+
+OPTIONS:
+    --help, -h          Show this help message
+    --install           Automatically install missing tools (requires sudo)
+    --interactive       Interactive tool selection mode
+    --profile PROFILE   Use predefined tool profile:
+                        - web-testing: Web application security tools
+                        - network-recon: Network reconnaissance tools  
+                        - ctf: CTF and forensics tools
+                        - essential: Core security tools only
+    --dry-run           Show what would be installed without installing
+    --essential-only    Install only essential tools
+    --ci-mode           CI/CD friendly mode (no colors, minimal output)
+    --debug             Enable debug logging
+
+EXAMPLES:
+    ./setup.sh                          # Check tools (default behavior)
+    ./setup.sh --install                # Install all missing tools
+    ./setup.sh --interactive            # Select tools interactively
+    ./setup.sh --profile web-testing    # Install web testing tools
+    ./setup.sh --install --essential-only  # Install essential tools only
+    ./setup.sh --dry-run --profile ctf  # Preview CTF tools installation
+
+PROFILES:
+    web-testing:    gobuster, ffuf, sqlmap, nuclei, burpsuite, nikto
+    network-recon:  nmap, masscan, amass, subfinder, rustscan
+    ctf:           gdb, radare2, binwalk, volatility3, john, hashcat
+    essential:     nmap, gobuster, sqlmap, nuclei, hydra, nikto
+
+NOTES:
+    - Installation requires sudo privileges
+    - Use --dry-run to preview changes before installation
+    - Logs are saved to /tmp/hexstrike_setup_YYYYMMDD_HHMMSS.log
+    - CI mode disables colors and interactive prompts
+
+EOF
+}
 
 LOG_LEVEL=${LOG_LEVEL:-"INFO"}  # DEBUG, INFO, WARN, ERROR
 LOG_FILE="/tmp/hexstrike_setup_$(date +%Y%m%d_%H%M%S).log"
@@ -33,7 +130,7 @@ setup_logging() {
         fi
         
         echo -e "${CYAN}📝 Logging to: $LOG_FILE${NC}"
-        log_with_timestamp "HexStrike AI Setup Script v3.1 started"
+        log_with_timestamp "HexStrike AI Setup Script v3.2 started"
         log_with_timestamp "System: $(uname -a)"
         log_with_timestamp "User: $(whoami)"
         log_with_timestamp "Working directory: $(pwd)"
@@ -93,6 +190,75 @@ cleanup_logging() {
 
 trap cleanup_logging EXIT
 
+declare -A TOOL_PROFILES
+init_tool_profiles() {
+    TOOL_PROFILES["web-testing"]="gobuster ffuf sqlmap nuclei burpsuite nikto dirb wpscan whatweb wafw00f commix xsser"
+    
+    TOOL_PROFILES["network-recon"]="nmap masscan amass subfinder rustscan dnsenum fierce dnsrecon theharvester"
+    
+    TOOL_PROFILES["ctf"]="gdb radare2 binwalk volatility3 john hashcat steghide foremost exiftool strings xxd"
+    
+    # Essential Tools Profile
+    TOOL_PROFILES["essential"]="nmap gobuster sqlmap nuclei hydra nikto john hashcat burpsuite amass"
+    
+    log_with_timestamp "Initialized tool profiles: ${!TOOL_PROFILES[*]}"
+}
+
+# Check if tool is in selected profile
+is_tool_in_profile() {
+    local tool="$1"
+    local profile="$2"
+    
+    if [ -z "$profile" ]; then
+        return 0  # No profile means include all tools
+    fi
+    
+    if [ -n "${TOOL_PROFILES[$profile]}" ]; then
+        echo "${TOOL_PROFILES[$profile]}" | grep -q "\b$tool\b"
+        return $?
+    else
+        log_with_timestamp "Unknown profile: $profile" "WARN"
+        return 1
+    fi
+}
+
+interactive_tool_selection() {
+    echo -e "${BLUE}🎯 Interactive Tool Selection${NC}"
+    echo "Select tools to install (enter numbers separated by spaces, or 'all' for all tools):"
+    echo ""
+    
+    local i=1
+    local tool_list=()
+    
+    for missing in "${MISSING_TOOLS[@]}"; do
+        local tool=$(echo "$missing" | cut -d':' -f1)
+        tool_list+=("$tool")
+        echo "[$i] $tool"
+        ((i++))
+    done
+    
+    echo ""
+    read -p "Enter your selection: " selection
+    
+    if [ "$selection" = "all" ]; then
+        SELECTED_TOOLS=("${tool_list[@]}")
+        log_with_timestamp "User selected all tools for installation"
+    else
+        SELECTED_TOOLS=()
+        for num in $selection; do
+            if [[ "$num" =~ ^[0-9]+$ ]] && [ "$num" -ge 1 ] && [ "$num" -le "${#tool_list[@]}" ]; then
+                local idx=$((num - 1))
+                SELECTED_TOOLS+=("${tool_list[$idx]}")
+                log_with_timestamp "User selected tool: ${tool_list[$idx]}"
+            else
+                echo -e "${YELLOW}⚠️  Invalid selection: $num${NC}"
+            fi
+        done
+    fi
+    
+    echo -e "${GREEN}✅ Selected ${#SELECTED_TOOLS[@]} tools for installation${NC}"
+}
+
 # Banner
 echo -e "${CYAN}"
 echo "██╗  ██╗███████╗██╗  ██╗███████╗████████╗██████╗ ██╗██╗  ██╗███████╗"
@@ -102,7 +268,7 @@ echo "██╔══██║██╔══╝   ██╔██╗ ╚══�
 echo "██║  ██║███████╗██╔╝ ██╗███████║   ██║   ██║  ██║██║██║  ██╗███████╗"
 echo "╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝╚══════╝"
 echo -e "${NC}"
-echo -e "${WHITE}HexStrike AI - Official Security Tools Checker v3.1${NC}"
+echo -e "${WHITE}HexStrike AI - Official Security Tools Checker v3.2${NC}"
 echo -e "${BLUE}🔗 Based on official HexStrike AI README - 70+ tools coverage${NC}"
 echo -e "${ORANGE}📋 Comprehensive verification with working download links${NC}"
 echo ""
@@ -182,6 +348,264 @@ create_installation_checkpoint() {
     
     echo "$checkpoint_file"
     log_with_timestamp "📋 Created installation checkpoint: $checkpoint_file"
+}
+
+install_package_manager_tools() {
+    local tools="$1"
+    if [ -z "$tools" ]; then
+        return 0
+    fi
+    
+    echo -e "${BLUE}📦 Installing package manager tools...${NC}"
+    log_with_timestamp "Starting package manager installation: $tools"
+    
+    if [ "$DRY_RUN" = true ]; then
+        echo -e "${CYAN}[DRY RUN] Would execute: $INSTALL_CMD$tools${NC}"
+        return 0
+    fi
+    
+    echo -e "${CYAN}🔄 Updating package lists...${NC}"
+    if ! install_with_retry "$UPDATE_CMD" "package-update"; then
+        log_with_timestamp "Package update failed, continuing anyway" "WARN"
+    fi
+    
+    local install_cmd="$INSTALL_CMD$tools"
+    if install_with_retry "$install_cmd" "package-manager-tools"; then
+        echo -e "${GREEN}✅ Package manager tools installed successfully${NC}"
+        return 0
+    else
+        echo -e "${RED}❌ Package manager installation failed${NC}"
+        return 1
+    fi
+}
+
+install_go_tools() {
+    local go_commands="$1"
+    if [ -z "$go_commands" ]; then
+        return 0
+    fi
+    
+    echo -e "${BLUE}🐹 Installing Go tools...${NC}"
+    log_with_timestamp "Starting Go tools installation"
+    
+    if ! command -v go >/dev/null 2>&1; then
+        echo -e "${YELLOW}⚠️  Go not found. Installing Go first...${NC}"
+        if [ "$DRY_RUN" = true ]; then
+            echo -e "${CYAN}[DRY RUN] Would install Go${NC}"
+        else
+            case $DISTRO in
+                "ubuntu"|"debian"|"kali"|"parrot"|"mint")
+                    install_with_retry "sudo apt install -y golang-go" "golang"
+                    ;;
+                "fedora"|"rhel"|"centos")
+                    install_with_retry "sudo dnf install -y golang" "golang"
+                    ;;
+                "arch"|"manjaro"|"endeavouros")
+                    install_with_retry "sudo pacman -S go" "golang"
+                    ;;
+            esac
+        fi
+    fi
+    
+    if [ "$DRY_RUN" = true ]; then
+        echo -e "${CYAN}[DRY RUN] Would execute Go installations:${NC}"
+        echo -e "$go_commands"
+        return 0
+    fi
+    
+    echo "$go_commands" | while IFS= read -r cmd; do
+        if [ -n "$cmd" ]; then
+            local tool_name=$(echo "$cmd" | awk '{print $NF}' | cut -d'@' -f1 | xargs basename)
+            echo -e "${CYAN}Installing: $tool_name${NC}"
+            if install_with_retry "$cmd" "$tool_name"; then
+                echo -e "${GREEN}✅ $tool_name installed${NC}"
+            else
+                echo -e "${RED}❌ $tool_name installation failed${NC}"
+            fi
+        fi
+    done
+}
+
+install_pip_tools() {
+    local pip_commands="$1"
+    if [ -z "$pip_commands" ]; then
+        return 0
+    fi
+    
+    echo -e "${BLUE}🐍 Installing Python tools...${NC}"
+    log_with_timestamp "Starting Python tools installation"
+    
+    if ! command -v pip3 >/dev/null 2>&1; then
+        echo -e "${YELLOW}⚠️  pip3 not found. Installing pip3 first...${NC}"
+        if [ "$DRY_RUN" = true ]; then
+            echo -e "${CYAN}[DRY RUN] Would install pip3${NC}"
+        else
+            case $DISTRO in
+                "ubuntu"|"debian"|"kali"|"parrot"|"mint")
+                    install_with_retry "sudo apt install -y python3-pip" "python3-pip"
+                    ;;
+                "fedora"|"rhel"|"centos")
+                    install_with_retry "sudo dnf install -y python3-pip" "python3-pip"
+                    ;;
+                "arch"|"manjaro"|"endeavouros")
+                    install_with_retry "sudo pacman -S python-pip" "python-pip"
+                    ;;
+            esac
+        fi
+    fi
+    
+    if [ "$DRY_RUN" = true ]; then
+        echo -e "${CYAN}[DRY RUN] Would execute pip installations:${NC}"
+        echo -e "$pip_commands"
+        return 0
+    fi
+    
+    echo "$pip_commands" | while IFS= read -r cmd; do
+        if [ -n "$cmd" ]; then
+            local tool_name=$(echo "$cmd" | awk '{print $NF}')
+            echo -e "${CYAN}Installing: $tool_name${NC}"
+            if install_with_retry "$cmd" "$tool_name"; then
+                echo -e "${GREEN}✅ $tool_name installed${NC}"
+            else
+                echo -e "${RED}❌ $tool_name installation failed${NC}"
+            fi
+        fi
+    done
+}
+
+perform_automatic_installation() {
+    if [ $MISSING_COUNT -eq 0 ]; then
+        echo -e "${GREEN}🎉 All tools are already installed!${NC}"
+        return 0
+    fi
+    
+    echo -e "${YELLOW}🚀 AUTOMATIC INSTALLATION MODE${NC}"
+    echo "================================================"
+    
+    if [ "$DRY_RUN" = true ]; then
+        echo -e "${CYAN}🔍 DRY RUN MODE - No actual installations will be performed${NC}"
+    fi
+    
+    local checkpoint_file
+    if [ "$DRY_RUN" = false ]; then
+        checkpoint_file=$(create_installation_checkpoint)
+        echo -e "${BLUE}📋 Created installation checkpoint: $checkpoint_file${NC}"
+    fi
+    
+    if [ "$DRY_RUN" = false ] && [ "$EUID" -ne 0 ]; then
+        echo -e "${YELLOW}🔐 Checking sudo access...${NC}"
+        if ! sudo -n true 2>/dev/null; then
+            echo -e "${CYAN}Please enter your password for sudo access:${NC}"
+            sudo -v
+            if [ $? -ne 0 ]; then
+                echo -e "${RED}❌ Sudo access required for installation${NC}"
+                return 1
+            fi
+        fi
+        echo -e "${GREEN}✅ Sudo access confirmed${NC}"
+    fi
+    
+    local PKG_MANAGER_TOOLS=""
+    local GO_TOOLS=""
+    local PIP_TOOLS=""
+    local FAILED_INSTALLS=()
+    local SUCCESS_COUNT=0
+    
+    local tools_to_install=()
+    if [ "$INTERACTIVE_MODE" = true ]; then
+        interactive_tool_selection
+        tools_to_install=("${SELECTED_TOOLS[@]}")
+    else
+        for missing in "${MISSING_TOOLS[@]}"; do
+            local tool=$(echo "$missing" | cut -d':' -f1)
+            if is_tool_in_profile "$tool" "$PROFILE"; then
+                tools_to_install+=("$missing")
+            fi
+        done
+    fi
+    
+    if [ ${#tools_to_install[@]} -eq 0 ]; then
+        echo -e "${YELLOW}⚠️  No tools selected for installation${NC}"
+        return 0
+    fi
+    
+    echo -e "${BLUE}📋 Installing ${#tools_to_install[@]} tools...${NC}"
+    
+    for missing in "${tools_to_install[@]}"; do
+        local tool=$(echo "$missing" | cut -d':' -f1)
+        local package=$(echo "$missing" | cut -d':' -f2)
+        
+        if [ -n "${TOOL_INSTALL_INFO[$tool]}" ]; then
+            IFS='|' read -r install_type install_info description <<< "${TOOL_INSTALL_INFO[$tool]}"
+            
+            case $install_type in
+                "pkg_manager")
+                    PKG_MANAGER_TOOLS+=" $package"
+                    ;;
+                "go_install")
+                    GO_TOOLS+="\n  go install -v $install_info@latest"
+                    ;;
+                "pip_install")
+                    PIP_TOOLS+="\n  pip3 install $install_info"
+                    ;;
+                *)
+                    echo -e "${YELLOW}⚠️  Skipping $tool (manual installation required)${NC}"
+                    log_with_timestamp "Skipped $tool - manual installation required" "WARN"
+                    ;;
+            esac
+        fi
+    done
+    
+    local install_success=true
+    
+    if [ -n "$PKG_MANAGER_TOOLS" ]; then
+        if install_package_manager_tools "$PKG_MANAGER_TOOLS"; then
+            ((SUCCESS_COUNT++))
+        else
+            install_success=false
+            FAILED_INSTALLS+=("package-manager-tools")
+        fi
+    fi
+    
+    if [ -n "$GO_TOOLS" ]; then
+        if install_go_tools "$GO_TOOLS"; then
+            ((SUCCESS_COUNT++))
+        else
+            install_success=false
+            FAILED_INSTALLS+=("go-tools")
+        fi
+    fi
+    
+    if [ -n "$PIP_TOOLS" ]; then
+        if install_pip_tools "$PIP_TOOLS"; then
+            ((SUCCESS_COUNT++))
+        else
+            install_success=false
+            FAILED_INSTALLS+=("pip-tools")
+        fi
+    fi
+    
+    echo ""
+    echo -e "${BLUE}📊 INSTALLATION SUMMARY${NC}"
+    echo "========================"
+    
+    if [ "$install_success" = true ] && [ ${#FAILED_INSTALLS[@]} -eq 0 ]; then
+        echo -e "${GREEN}🎉 All installations completed successfully!${NC}"
+        log_with_timestamp "All installations completed successfully"
+    else
+        echo -e "${YELLOW}⚠️  Some installations failed:${NC}"
+        for failed in "${FAILED_INSTALLS[@]}"; do
+            echo -e "   ❌ $failed"
+        done
+        log_with_timestamp "Installation completed with failures: ${FAILED_INSTALLS[*]}" "WARN"
+    fi
+    
+    if [ "$DRY_RUN" = false ]; then
+        echo -e "${CYAN}📋 Installation checkpoint: $checkpoint_file${NC}"
+        echo -e "${CYAN}📝 Full log: $LOG_FILE${NC}"
+    fi
+    
+    return 0
 }
 
 # Detect Linux distribution
@@ -867,8 +1291,18 @@ generate_verified_install_commands() {
 }
 
 # Main execution
+parse_arguments "$@"
+
+if [ "$HELP_MODE" = true ]; then
+    show_help
+    exit 0
+fi
+
 # Initialize logging system
 setup_logging
+
+# Initialize tool profiles
+init_tool_profiles
 
 echo -e "${ORANGE}🔍 Initializing complete HexStrike AI tool database...${NC}"
 init_complete_tool_database
@@ -1035,7 +1469,12 @@ fi
 
 if [ $MISSING_COUNT -gt 0 ]; then
    echo ""
-   generate_verified_install_commands
+   
+   if [ "$INSTALL_MODE" = true ]; then
+       perform_automatic_installation
+   else
+       generate_verified_install_commands
+   fi
 fi
 
 # Performance indicator with HexStrike AI context
