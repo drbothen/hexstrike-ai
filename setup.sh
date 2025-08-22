@@ -915,6 +915,42 @@ init_complete_tool_database() {
     TOOL_INSTALL_INFO["hash-identifier"]="pkg_manager|hash-identifier|Hash type identifier"
     TOOL_INSTALL_INFO["ophcrack"]="pkg_manager|ophcrack|Windows password cracker"
     TOOL_INSTALL_INFO["rustscan"]="github_release|https://github.com/RustScan/RustScan/releases/latest/download/rustscan_2.1.1_amd64.deb|Ultra-fast port scanner"
+    
+    # Additional tools discovered from comprehensive source code analysis
+    TOOL_INSTALL_INFO["naabu"]="go_install|github.com/projectdiscovery/naabu/v2/cmd/naabu|Fast port scanner"
+    TOOL_INSTALL_INFO["assetfinder"]="go_install|github.com/tomnomnom/assetfinder|Subdomain discovery tool"
+    TOOL_INSTALL_INFO["findomain"]="github_release|https://github.com/Findomain/Findomain/releases/latest/download/findomain-linux|Cross-platform subdomain enumerator"
+    TOOL_INSTALL_INFO["gau"]="go_install|github.com/lc/gau/v2/cmd/gau|Get All URLs from web archives"
+    TOOL_INSTALL_INFO["waybackurls"]="go_install|github.com/tomnomnom/waybackurls|Fetch URLs from Wayback Machine"
+    TOOL_INSTALL_INFO["x8"]="github_manual|https://github.com/Sh1Yo/x8|Hidden parameter discovery tool"
+    TOOL_INSTALL_INFO["jaeles"]="go_install|github.com/jaeles-project/jaeles|Automated web application testing framework"
+    TOOL_INSTALL_INFO["dotdotpwn"]="github_manual|https://github.com/wireghoul/dotdotpwn|Directory traversal fuzzer"
+    TOOL_INSTALL_INFO["xsser"]="pkg_manager|xsser|Cross-site scripting detection and exploitation"
+    TOOL_INSTALL_INFO["wfuzz"]="pkg_manager|wfuzz|Web application fuzzer"
+    TOOL_INSTALL_INFO["nbtscan"]="pkg_manager|nbtscan|NetBIOS scanner"
+    TOOL_INSTALL_INFO["arp-scan"]="pkg_manager|arp-scan|ARP network scanner"
+    TOOL_INSTALL_INFO["bloodhound"]="manual_download|https://github.com/BloodHoundAD/BloodHound/releases|Active Directory attack path analysis"
+    TOOL_INSTALL_INFO["setoolkit"]="github_manual|https://github.com/trustedsec/social-engineer-toolkit|Social engineering toolkit"
+    TOOL_INSTALL_INFO["gophish"]="github_release|https://github.com/gophish/gophish/releases|Open-source phishing toolkit"
+    TOOL_INSTALL_INFO["mobsf"]="github_manual|https://github.com/MobSF/Mobile-Security-Framework-MobSF|Mobile security framework"
+    TOOL_INSTALL_INFO["frida"]="pip_install|frida-tools|Dynamic instrumentation toolkit"
+    TOOL_INSTALL_INFO["objection"]="pip_install|objection|Runtime mobile exploration toolkit"
+    TOOL_INSTALL_INFO["powershell-empire"]="github_manual|https://github.com/BC-SECURITY/Empire|PowerShell post-exploitation framework"
+    TOOL_INSTALL_INFO["covenant"]="github_manual|https://github.com/cobbr/Covenant|.NET command and control framework"
+    TOOL_INSTALL_INFO["cobalt-strike"]="commercial|https://www.cobaltstrike.com|Commercial adversary simulation platform"
+    TOOL_INSTALL_INFO["docker-bench-security"]="github_manual|https://github.com/docker/docker-bench-security|Docker security benchmark"
+    TOOL_INSTALL_INFO["clair"]="github_release|https://github.com/quay/clair/releases|Container vulnerability scanner"
+    TOOL_INSTALL_INFO["falco"]="install_script|https://falco.org/repo/falcosecurity-packages.asc|Runtime security monitoring"
+    TOOL_INSTALL_INFO["anew"]="go_install|github.com/tomnomnom/anew|Tool for adding new lines to files"
+    TOOL_INSTALL_INFO["qsreplace"]="go_install|github.com/tomnomnom/qsreplace|Query string parameter replacement"
+    TOOL_INSTALL_INFO["uro"]="pip_install|uro|URL filtering and deduplication tool"
+    TOOL_INSTALL_INFO["pwntools"]="pip_install|pwntools|CTF framework and exploit development library"
+    TOOL_INSTALL_INFO["one-gadget"]="gem_install|one_gadget|RCE gadget finder for libc"
+    TOOL_INSTALL_INFO["libc-database"]="github_manual|https://github.com/niklasb/libc-database|Libc offset database"
+    TOOL_INSTALL_INFO["gdb-peda"]="github_manual|https://github.com/longld/peda|Python Exploit Development Assistance for GDB"
+    TOOL_INSTALL_INFO["angr"]="pip_install|angr|Binary analysis platform"
+    TOOL_INSTALL_INFO["ropper"]="pip_install|ropper|ROP/JOP gadget finder"
+    TOOL_INSTALL_INFO["pwninit"]="github_release|https://github.com/io12/pwninit/releases|CTF pwn challenge setup tool"
 }
 
 # Function to get package name based on distribution
@@ -942,6 +978,27 @@ get_package_name() {
                 "ffuf") echo "ffuf" ;;
                 "ghidra") echo "ghidra" ;;
                 "volatility3") echo "volatility3" ;;
+                "john") echo "john-jumbo" ;;
+                "naabu") echo "naabu" ;;
+                "assetfinder") echo "assetfinder" ;;
+                "findomain") echo "findomain" ;;
+                "feroxbuster") echo "feroxbuster" ;;
+                "gau") echo "gau" ;;
+                "waybackurls") echo "waybackurls" ;;
+                "anew") echo "anew" ;;
+                "qsreplace") echo "qsreplace" ;;
+                "x8") echo "x8" ;;
+                "jaeles") echo "jaeles" ;;
+                "dalfox") echo "dalfox" ;;
+                "httpx") echo "httpx" ;;
+                "katana") echo "katana" ;;
+                "hakrawler") echo "hakrawler" ;;
+                "subjack") echo "subjack" ;;
+                "rustscan") echo "rustscan" ;;
+                "terrascan") echo "terrascan" ;;
+                "kube-bench") echo "kube-bench" ;;
+                "clair") echo "clair" ;;
+                "falco") echo "falco" ;;
                 *) echo "$tool" ;;
             esac
             ;;
@@ -983,6 +1040,12 @@ get_package_name() {
                 "sleuthkit") echo "sleuthkit" ;;
                 "metasploit-framework") echo "metasploit" ;;
                 "xxd") echo "vim-common" ;;
+                "john") echo "john" ;;
+                "nbtscan") echo "nbtscan" ;;
+                "arp-scan") echo "arp-scan" ;;
+                "xsser") echo "xsser" ;;
+                "wfuzz") echo "wfuzz" ;;
+                "falco") echo "falco" ;;
                 *) echo "$tool" ;;
             esac
             ;;
