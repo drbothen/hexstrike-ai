@@ -188,77 +188,31 @@ def subfinder():
     try:
         params = request.json
         domain = params.get("domain", "")
-        sources = params.get("sources", [])
-        silent = params.get("silent", False)
-        timeout = params.get("timeout", 30)
-        threads = params.get("threads", 10)
-        output_file = params.get("output_file", "")
+        silent = params.get("silent", True)
+        all_sources = params.get("all_sources", False)
         additional_args = params.get("additional_args", "")
         
         if not domain:
-            return jsonify({"error": "Domain parameter is required"}), 400
+            logger.warning("🌐 Subfinder called without domain parameter")
+            return jsonify({
+                "error": "Domain parameter is required"
+            }), 400
         
-        # Base command
-        command = ["subfinder", "-d", domain]
+        command = f"subfinder -d {domain}"
         
-        # Sources
-        if sources:
-            command.extend(["-sources", ",".join(sources)])
-        
-        # Silent mode
         if silent:
-            command.append("-silent")
-        
-        # Timeout
-        if timeout:
-            command.extend(["-timeout", str(timeout)])
-        
-        # Threads
-        if threads:
-            command.extend(["-t", str(threads)])
-        
-        # Output file
-        if output_file:
-            command.extend(["-o", output_file])
-        
-        # Additional arguments
+            command += " -silent"
+            
+        if all_sources:
+            command += " -all"
+            
         if additional_args:
-            command.extend(additional_args.split())
+            command += f" {additional_args}"
         
-        # Convert to string
-        command_str = " ".join(command)
-        
-        logger.info(f"🔍 Executing subfinder: {command_str}")
-        
-        start_time = time.time()
-        result = execute_command_with_recovery(command_str)
-        execution_time = time.time() - start_time
-        
-        # Parse subdomains from output
-        subdomains = []
-        for line in result["output"].split("\n"):
-            subdomain = line.strip()
-            if subdomain and subdomain != domain:
-                subdomains.append(subdomain)
-        
-        enumeration_results = {
-            "domain": domain,
-            "subdomains": subdomains,
-            "total_subdomains": len(subdomains),
-            "sources_used": sources if sources else ["default"],
-            "unique_subdomains": len(set(subdomains))
-        }
-        
-        logger.info(f"🔍 Subfinder completed in {execution_time:.2f}s | Found: {len(subdomains)} subdomains")
-        
-        return jsonify({
-            "success": True,
-            "command": command_str,
-            "enumeration_results": enumeration_results,
-            "raw_output": result["output"],
-            "execution_time": execution_time,
-            "timestamp": datetime.now().isoformat()
-        })
+        logger.info(f"🔍 Starting Subfinder: {domain}")
+        result = execute_command(command)
+        logger.info(f"📊 Subfinder completed for {domain}")
+        return jsonify(result)
     except Exception as e:
         logger.error(f"💥 Error in subfinder endpoint: {str(e)}")
         return jsonify({
