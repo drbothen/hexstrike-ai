@@ -156,4 +156,37 @@ if additional_args:
 - Docker daemon access testing
 
 ## Code Reproduction
-Complete Flask endpoint implementation for Docker Bench for Security assessment with configurable checks, exclusions, and structured output generation. Essential for Docker security assessment and CIS benchmark compliance validation.
+```python
+# From line 12950: Complete Flask endpoint implementation
+@app.route("/api/tools/docker-bench-security", methods=["POST"])
+def docker_bench_security():
+    """Execute Docker Bench for Security assessment"""
+    try:
+        params = request.json
+        checks = params.get("checks", "")
+        exclude = params.get("exclude", "")
+        output_format = params.get("output_format", "json")
+        additional_args = params.get("additional_args", "")
+        
+        command = "docker-bench-security"
+        
+        if checks:
+            command += f" -c {checks}"
+        
+        if exclude:
+            command += f" -e {exclude}"
+        
+        if output_format == "json":
+            command += " -l /tmp/docker-bench-results.log"
+        
+        if additional_args:
+            command += f" {additional_args}"
+        
+        logger.info("🐳 Starting Docker Bench for Security assessment")
+        result = execute_command(command)
+        logger.info("📊 Docker Bench for Security assessment completed")
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"💥 Error in docker-bench-security endpoint: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+```

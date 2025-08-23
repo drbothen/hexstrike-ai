@@ -128,4 +128,28 @@ return jsonify({
 - Performance testing for large result sets
 
 ## Code Reproduction
-Complete Flask endpoint implementation for asynchronous task result retrieval with comprehensive status reporting, error handling, and integration with enhanced process management system. Essential for monitoring and collecting results from asynchronous security tool execution.
+```python
+# From line 14842: Complete Flask endpoint implementation
+@app.route("/api/process/get-task-result/<task_id>", methods=["GET"])
+def get_async_task_result(task_id):
+    """Get result of asynchronous task"""
+    try:
+        logger.info(f"📋 Getting task result for task ID: {task_id}")
+        
+        # Get result of asynchronous task
+        result = enhanced_process_manager.get_task_result(task_id)
+        
+        if result["status"] == "not_found":
+            return jsonify({"error": "Task not found"}), 404
+        
+        logger.info(f"📋 Task result retrieved | Task ID: {task_id} | Status: {result['status']}")
+        return jsonify({
+            "success": True,
+            "task_id": task_id,
+            "result": result,
+            "timestamp": datetime.now().isoformat()
+        })
+    except Exception as e:
+        logger.error(f"💥 Error getting task result: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+```

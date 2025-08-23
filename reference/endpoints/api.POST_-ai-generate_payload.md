@@ -180,4 +180,36 @@ return jsonify({
 - Test case generation accuracy validation
 
 ## Code Reproduction
-Complete Flask endpoint implementation for AI-powered contextual payload generation with multi-attack support, complexity scaling, and automated test case generation. Essential for advanced security testing and vulnerability research workflows.
+```python
+# From line 12880: Complete Flask endpoint implementation
+@app.route("/api/ai/generate_payload", methods=["POST"])
+def ai_generate_payload():
+    """Generate AI-powered contextual payloads for security testing"""
+    try:
+        params = request.json or {}
+        target_info = {
+            "attack_type": params.get("attack_type", "xss"),
+            "complexity": params.get("complexity", "basic"),
+            "technology": params.get("technology", ""),
+            "url": params.get("url", "")
+        }
+        
+        logger.info(f"🤖 Generating AI payloads for {target_info['attack_type']} attack")
+        
+        # Generate contextual payloads using AI
+        result = ai_payload_generator.generate_contextual_payload(target_info)
+        
+        logger.info(f"✅ Generated {result.get('payload_count', 0)} contextual payloads")
+        
+        return jsonify({
+            "success": True,
+            "ai_payload_generation": result,
+            "timestamp": datetime.now().isoformat()
+        })
+    except Exception as e:
+        logger.error(f"💥 Error in AI payload generation: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": f"Server error: {str(e)}"
+        }), 500
+```

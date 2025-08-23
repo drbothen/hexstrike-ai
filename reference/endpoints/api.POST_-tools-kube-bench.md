@@ -158,4 +158,41 @@ if additional_args:
 - Kubernetes cluster access testing
 
 ## Code Reproduction
-Complete Flask endpoint implementation for kube-bench CIS Kubernetes benchmark checks with configurable targets, version-specific benchmarks, and structured output generation. Essential for Kubernetes security assessment and compliance validation.
+```python
+# From line 12850: Complete Flask endpoint implementation
+@app.route("/api/tools/kube-bench", methods=["POST"])
+def kube_bench():
+    """Execute kube-bench for CIS Kubernetes benchmark checks"""
+    try:
+        params = request.json
+        targets = params.get("targets", "master,node,etcd,policies")
+        version = params.get("version", "")
+        config_dir = params.get("config_dir", "")
+        output_format = params.get("output_format", "json")
+        additional_args = params.get("additional_args", "")
+        
+        command = f"kube-bench"
+        
+        if targets != "master,node,etcd,policies":
+            command += f" --targets {targets}"
+        
+        if version:
+            command += f" --version {version}"
+        
+        if config_dir:
+            command += f" --config-dir {config_dir}"
+        
+        if output_format == "json":
+            command += " --json"
+        
+        if additional_args:
+            command += f" {additional_args}"
+        
+        logger.info(f"🔒 Starting kube-bench assessment: {targets}")
+        result = execute_command(command)
+        logger.info(f"📊 Kube-bench assessment completed for {targets}")
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"💥 Error in kube-bench endpoint: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+```

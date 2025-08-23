@@ -216,4 +216,57 @@ if not (username or username_file) or not (password or password_file):
 - Credential configuration testing
 
 ## Code Reproduction
-Complete Flask endpoint implementation for Hydra password attacks with multi-service support, flexible credential configuration, and comprehensive parameter validation. Essential for password security testing and authentication assessment workflows.
+```python
+# From line 9224: Complete Flask endpoint implementation
+@app.route("/api/tools/hydra", methods=["POST"])
+def hydra():
+    """Execute hydra with enhanced logging"""
+    try:
+        params = request.json
+        target = params.get("target", "")
+        service = params.get("service", "")
+        username = params.get("username", "")
+        username_file = params.get("username_file", "")
+        password = params.get("password", "")
+        password_file = params.get("password_file", "")
+        additional_args = params.get("additional_args", "")
+        
+        if not target or not service:
+            logger.warning("🎯 Hydra called without target or service parameter")
+            return jsonify({
+                "error": "Target and service parameters are required"
+            }), 400
+        
+        if not (username or username_file) or not (password or password_file):
+            logger.warning("🔑 Hydra called without username/password parameters")
+            return jsonify({
+                "error": "Username/username_file and password/password_file are required"
+            }), 400
+        
+        command = f"hydra -t 4"
+        
+        if username:
+            command += f" -l {username}"
+        elif username_file:
+            command += f" -L {username_file}"
+        
+        if password:
+            command += f" -p {password}"
+        elif password_file:
+            command += f" -P {password_file}"
+        
+        if additional_args:
+            command += f" {additional_args}"
+        
+        command += f" {target} {service}"
+        
+        logger.info(f"🔑 Starting Hydra attack: {target}:{service}")
+        result = execute_command(command)
+        logger.info(f"📊 Hydra attack completed for {target}")
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"💥 Error in hydra endpoint: {str(e)}")
+        return jsonify({
+            "error": f"Server error: {str(e)}"
+        }), 500
+```

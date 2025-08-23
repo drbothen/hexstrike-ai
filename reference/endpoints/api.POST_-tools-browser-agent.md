@@ -258,4 +258,75 @@ if result.get("success") and active_tests:
 - Screenshot capture functionality testing
 
 ## Code Reproduction
-Complete Flask endpoint implementation for AI-powered browser agent providing automated web application inspection, security analysis, screenshot capture, and comprehensive browser automation capabilities. Essential for automated web application security testing and analysis workflows.
+```python
+# From line 12266: Complete Flask endpoint implementation
+@app.route("/api/tools/browser-agent", methods=["POST"])
+def browser_agent_endpoint():
+    """AI-powered browser agent for web application inspection"""
+    try:
+        params = request.json
+        action = params.get("action", "")
+        url = params.get("url", "")
+        headless = params.get("headless", True)
+        wait_time = params.get("wait_time", 5)
+        proxy_port = params.get("proxy_port", 8080)
+        active_tests = params.get("active_tests", False)
+        
+        if action == "navigate":
+            if not url:
+                logger.warning("🌐 Browser agent called without URL for navigate action")
+                return jsonify({"error": "URL parameter is required for navigate action"}), 400
+            
+            # Setup browser if not already initialized
+            if not browser_agent.driver:
+                setup_success = browser_agent.setup_browser(headless, proxy_port)
+                if not setup_success:
+                    return jsonify({"error": "Failed to setup browser"}), 500
+            
+            logger.info(f"🌐 BROWSER AGENT: Navigating to {url}")
+            result = browser_agent.navigate_and_inspect(url, wait_time)
+            
+            # Run active tests if requested
+            if result.get("success") and active_tests:
+                logger.info("🔍 Running active security tests")
+                active_results = browser_agent.run_active_tests(result.get("page_info", {}))
+                result["active_tests"] = active_results
+                
+                if active_results.get("active_findings"):
+                    logger.warning(f"⚠️ Active security findings detected: {len(active_results['active_findings'])}")
+            
+            return jsonify(result)
+        
+        elif action == "screenshot":
+            if not browser_agent.driver:
+                return jsonify({"error": "Browser not initialized. Use navigate action first."}), 400
+            
+            screenshot_path = f"/tmp/hexstrike_screenshot_{int(time.time())}.png"
+            browser_agent.driver.save_screenshot(screenshot_path)
+            
+            return jsonify({
+                "success": True,
+                "screenshot": screenshot_path,
+                "current_url": browser_agent.driver.current_url,
+                "timestamp": datetime.now().isoformat()
+            })
+        
+        elif action == "close":
+            browser_agent.close_browser()
+            return jsonify({"success": True, "message": "Browser closed"})
+        
+        elif action == "status":
+            return jsonify({
+                "success": True,
+                "browser_active": browser_agent.driver is not None,
+                "screenshots_taken": len(browser_agent.screenshots),
+                "pages_visited": len(browser_agent.page_sources),
+            })
+        
+        else:
+            return jsonify({"error": f"Unknown action: {action}"}), 400
+    
+    except Exception as e:
+        logger.error(f"💥 Error in browser-agent endpoint: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+```
