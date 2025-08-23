@@ -203,66 +203,20 @@ def enum4linux():
     try:
         params = request.json
         target = params.get("target", "")
-        username = params.get("username", "")
-        password = params.get("password", "")
-        all_enum = params.get("all", True)
-        users = params.get("users", False)
-        shares = params.get("shares", False)
-        groups = params.get("groups", False)
-        additional_args = params.get("additional_args", "")
+        additional_args = params.get("additional_args", "-a")
         
         if not target:
-            return jsonify({"error": "Target parameter is required"}), 400
+            logger.warning("🎯 Enum4linux called without target parameter")
+            return jsonify({
+                "error": "Target parameter is required"
+            }), 400
         
-        # Base command
-        command = ["enum4linux"]
+        command = f"enum4linux {additional_args} {target}"
         
-        # Authentication
-        if username:
-            command.extend(["-u", username])
-        if password:
-            command.extend(["-p", password])
-        
-        # Enumeration options
-        if all_enum:
-            command.append("-a")
-        else:
-            if users:
-                command.append("-U")
-            if shares:
-                command.append("-S")
-            if groups:
-                command.append("-G")
-        
-        # Additional arguments
-        if additional_args:
-            command.extend(additional_args.split())
-        
-        # Target
-        command.append(target)
-        
-        # Convert to string
-        command_str = " ".join(command)
-        
-        logger.info(f"🔍 Executing enum4linux: {command_str}")
-        
-        start_time = time.time()
-        result = execute_command_with_recovery(command_str)
-        execution_time = time.time() - start_time
-        
-        # Parse output for enumeration results
-        enumeration_results = parse_enum4linux_output(result["output"])
-        
-        logger.info(f"🔍 Enum4linux completed in {execution_time:.2f}s")
-        
-        return jsonify({
-            "success": True,
-            "command": command_str,
-            "enumeration_results": enumeration_results,
-            "raw_output": result["output"],
-            "execution_time": execution_time,
-            "timestamp": datetime.now().isoformat()
-        })
+        logger.info(f"🔍 Starting Enum4linux: {target}")
+        result = execute_command(command)
+        logger.info(f"📊 Enum4linux completed for {target}")
+        return jsonify(result)
     except Exception as e:
         logger.error(f"💥 Error in enum4linux endpoint: {str(e)}")
         return jsonify({
