@@ -190,4 +190,54 @@ result = execute_command(command)
 - Recovery mechanism functionality testing
 
 ## Code Reproduction
-Complete Flask endpoint implementation for nmap network scanning with intelligent error handling, configurable parameters, and comprehensive logging. Essential for network discovery and security assessment workflows.
+```python
+@app.route("/api/tools/nmap", methods=["POST"])
+def nmap():
+    """Execute nmap scan with enhanced logging, caching, and intelligent error handling"""
+    try:
+        params = request.json
+        target = params.get("target", "")
+        scan_type = params.get("scan_type", "-sCV")
+        ports = params.get("ports", "")
+        additional_args = params.get("additional_args", "-T4 -Pn")
+        use_recovery = params.get("use_recovery", True)
+        
+        if not target:
+            logger.warning("🎯 Nmap called without target parameter")
+            return jsonify({
+                "error": "Target parameter is required"
+            }), 400
+        
+        command = f"nmap {scan_type}"
+        
+        if ports:
+            command += f" -p {ports}"
+        
+        if additional_args:
+            command += f" {additional_args}"
+        
+        command += f" {target}"
+        
+        logger.info(f"🔍 Starting Nmap scan: {target}")
+        
+        # Use intelligent error handling if enabled
+        if use_recovery:
+            tool_params = {
+                "target": target,
+                "scan_type": scan_type,
+                "ports": ports,
+                "additional_args": additional_args
+            }
+            result = execute_command_with_recovery("nmap", command, tool_params)
+        else:
+            result = execute_command(command)
+        
+        logger.info(f"📊 Nmap scan completed for {target}")
+        return jsonify(result)
+        
+    except Exception as e:
+        logger.error(f"💥 Error in nmap endpoint: {str(e)}")
+        return jsonify({
+            "error": f"Server error: {str(e)}"
+        }), 500
+```
