@@ -263,4 +263,100 @@ all_essential_tools_available = all(tools_status[tool] for tool in essential_too
 - Response format and content verification
 
 ## Code Reproduction
-Complete Flask endpoint implementation for comprehensive health checking with 100+ security tool detection across 13 categories, performance metrics integration, and detailed system status reporting. Essential for system monitoring and operational readiness validation.
+```python
+@app.route("/health", methods=["GET"])
+def health():
+    """Comprehensive health check with tool detection and system status"""
+    try:
+        start_time = time.time()
+        
+        # Basic system info
+        health_data = {
+            "status": "healthy",
+            "timestamp": datetime.now().isoformat(),
+            "uptime": time.time() - start_time,
+            "version": "5.0.0",
+            "environment": {
+                "python_version": sys.version,
+                "platform": platform.platform(),
+                "architecture": platform.architecture()[0],
+                "processor": platform.processor(),
+                "hostname": platform.node()
+            }
+        }
+        
+        # Tool detection categories
+        tool_categories = {
+            "network_scanners": ["nmap", "masscan", "rustscan", "arp-scan"],
+            "web_scanners": ["gobuster", "dirb", "dirsearch", "feroxbuster", "ffuf"],
+            "vulnerability_scanners": ["nuclei", "nikto", "jaeles", "dalfox"],
+            "exploitation_tools": ["sqlmap", "hydra", "metasploit", "burpsuite"],
+            "reconnaissance_tools": ["amass", "subfinder", "httpx", "katana", "gau"],
+            "binary_analysis": ["ghidra", "radare2", "gdb", "binwalk", "strings"],
+            "cloud_security": ["prowler", "scout-suite", "trivy", "checkov"],
+            "container_security": ["docker-bench-security", "kube-bench", "kube-hunter"],
+            "forensics_tools": ["volatility", "foremost", "exiftool", "steghide"],
+            "crypto_tools": ["hashcat", "john", "hashpump"],
+            "network_tools": ["enum4linux", "smbmap", "rpcclient", "nbtscan"],
+            "web_crawlers": ["hakrawler", "waybackurls", "paramspider", "arjun"],
+            "utilities": ["anew", "qsreplace", "uro", "xxd", "objdump"]
+        }
+        
+        # Detect available tools
+        detected_tools = {}
+        total_tools = 0
+        available_tools = 0
+        
+        for category, tools in tool_categories.items():
+            detected_tools[category] = {}
+            for tool in tools:
+                total_tools += 1
+                try:
+                    result = subprocess.run(
+                        ["which", tool], 
+                        capture_output=True, 
+                        text=True, 
+                        timeout=2
+                    )
+                    is_available = result.returncode == 0
+                    if is_available:
+                        available_tools += 1
+                    detected_tools[category][tool] = {
+                        "available": is_available,
+                        "path": result.stdout.strip() if is_available else None
+                    }
+                except Exception:
+                    detected_tools[category][tool] = {
+                        "available": False,
+                        "path": None
+                    }
+        
+        # Calculate tool availability percentage
+        tool_availability = (available_tools / total_tools) * 100 if total_tools > 0 else 0
+        
+        health_data.update({
+            "tools": {
+                "total_tools": total_tools,
+                "available_tools": available_tools,
+                "availability_percentage": round(tool_availability, 2),
+                "categories": detected_tools
+            },
+            "performance": {
+                "response_time_ms": round((time.time() - start_time) * 1000, 2),
+                "memory_usage_mb": round(psutil.Process().memory_info().rss / 1024 / 1024, 2) if 'psutil' in globals() else "N/A",
+                "cpu_percent": psutil.Process().cpu_percent() if 'psutil' in globals() else "N/A"
+            }
+        })
+        
+        logger.info(f"🏥 Health check completed: {available_tools}/{total_tools} tools available ({tool_availability:.1f}%)")
+        
+        return jsonify(health_data)
+        
+    except Exception as e:
+        logger.error(f"💥 Error in health endpoint: {str(e)}")
+        return jsonify({
+            "status": "unhealthy",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }), 500
+```
