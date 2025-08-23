@@ -224,85 +224,41 @@ def masscan():
     """Execute Masscan for high-speed Internet-scale port scanning with intelligent rate limiting"""
     try:
         params = request.json
-        targets = params.get("targets", "")
-        ports = params.get("ports", "")
+        target = params.get("target", "")
+        ports = params.get("ports", "1-65535")
         rate = params.get("rate", 1000)
-        protocol = params.get("protocol", "tcp")
-        output_format = params.get("output_format", "list")
-        output_file = params.get("output_file", "")
-        exclude = params.get("exclude", "")
         interface = params.get("interface", "")
+        router_mac = params.get("router_mac", "")
         source_ip = params.get("source_ip", "")
+        banners = params.get("banners", False)
         additional_args = params.get("additional_args", "")
         
-        # Validate required parameters
-        missing_params = []
-        if not targets:
-            missing_params.append("targets")
-        if not ports:
-            missing_params.append("ports")
-        if missing_params:
-            return jsonify({"error": f"Missing required parameters: {', '.join(missing_params)}"}), 400
+        if not target:
+            logger.warning("🎯 Masscan called without target parameter")
+            return jsonify({"error": "Target parameter is required"}), 400
         
-        # Base command
-        command = ["masscan", targets, "-p" + ports]
+        command = f"masscan {target} -p{ports} --rate={rate}"
         
-        # Scan rate
-        command.extend(["--rate", str(rate)])
-        
-        # Protocol
-        if protocol == "udp":
-            command.append("--udp")
-        
-        # Output format
-        if output_format != "list":
-            command.extend(["-oX" if output_format == "xml" else "-oJ", output_file or "-"])
-        
-        # Exclusions
-        if exclude:
-            command.extend(["--exclude", exclude])
-        
-        # Network interface
         if interface:
-            command.extend(["-e", interface])
+            command += f" -e {interface}"
         
-        # Source IP
+        if router_mac:
+            command += f" --router-mac {router_mac}"
+        
         if source_ip:
-            command.extend(["--source-ip", source_ip])
+            command += f" --source-ip {source_ip}"
         
-        # Output file
-        if output_file and output_format == "list":
-            command.extend(["-oL", output_file])
+        if banners:
+            command += " --banners"
         
-        # Additional arguments
         if additional_args:
-            command.extend(additional_args.split())
+            command += f" {additional_args}"
         
-        # Convert to string
-        command_str = " ".join(command)
-        
-        logger.info(f"🔍 Executing masscan: {command_str}")
-        
-        start_time = time.time()
-        result = execute_command_with_recovery(command_str)
-        execution_time = time.time() - start_time
-        
-        # Parse output for scan results
-        scan_results = parse_masscan_output(result["output"], targets, ports, rate)
-        
-        logger.info(f"🔍 Masscan completed in {execution_time:.2f}s | Found: {scan_results.get('total_open_ports', 0)} open ports")
-        
-        return jsonify({
-            "success": True,
-            "command": command_str,
-            "scan_results": scan_results,
-            "raw_output": result["output"],
-            "execution_time": execution_time,
-            "timestamp": datetime.now().isoformat()
-        })
+        logger.info(f"🚀 Starting Masscan: {target} at rate {rate}")
+        result = execute_command(command)
+        logger.info(f"📊 Masscan completed for {target}")
+        return jsonify(result)
     except Exception as e:
         logger.error(f"💥 Error in masscan endpoint: {str(e)}")
-        return jsonify({
-            "error": f"Server error: {str(e)}"
-        }), 500
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
 ```
