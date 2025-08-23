@@ -230,6 +230,16 @@ This document provides comprehensive installation information for all security t
 | **uro** | N/A (pip install) | uro | `pip3 install uro` | `uro --version` | URL filtering and manipulation tool | `/api/tools/uro` |
 | **volatility** | N/A (pip install) | volatility | `pip3 install volatility` | `volatility --version` | Memory forensics framework (legacy) | `/api/tools/volatility` |
 | **x8** | N/A (GitHub release) | x8 | Download from GitHub releases | `x8 --version` | Hidden parameter discovery suite | `/api/tools/x8` |
+| **api-fuzzer** | N/A (pip install) | api-fuzzer | `pip3 install api-fuzzer` | `api-fuzzer --version` | API security testing tool | `/api/tools/api_fuzzer` |
+| **api-schema-analyzer** | N/A (pip install) | api-schema-analyzer | `pip3 install api-schema-analyzer` | `api-schema-analyzer --version` | API schema analysis tool | `/api/tools/api_schema_analyzer` |
+| **browser-agent** | N/A (pip install) | browser-agent | `pip3 install browser-agent` | `browser-agent --version` | Browser automation agent | `/api/tools/browser-agent` |
+| **burpsuite-alternative** | N/A (Manual install) | burpsuite-alternative | Manual installation required | `burpsuite-alternative --version` | Web application security testing | `/api/tools/burpsuite-alternative` |
+| **gdb-peda** | N/A (GitHub) | gdb-peda | `git clone https://github.com/longld/peda.git ~/peda` | `gdb -ex "source ~/peda/peda.py" -ex quit` | GDB Python Exploit Development Assistance | `/api/tools/gdb-peda` |
+| **graphql-scanner** | N/A (pip install) | graphql-scanner | `pip3 install graphql-scanner` | `graphql-scanner --version` | GraphQL security scanner | `/api/tools/graphql_scanner` |
+| **http-framework** | N/A (pip install) | http-framework | `pip3 install http-framework` | `http-framework --version` | HTTP testing framework | `/api/tools/http-framework` |
+| **jwt-analyzer** | N/A (pip install) | jwt-analyzer | `pip3 install jwt-analyzer` | `jwt-analyzer --version` | JWT security analysis tool | `/api/tools/jwt_analyzer` |
+| **libc-database** | N/A (GitHub) | libc-database | `git clone https://github.com/niklasb/libc-database.git` | `./libc-database/find` | Libc database for exploit development | `/api/tools/libc-database` |
+| **nmap-advanced** | nmap | nmap | `sudo apt install -y nmap` | `nmap --version` | Advanced Nmap scanning configurations | `/api/tools/nmap-advanced` |
 
 **Additional Sources:**
 - Wireshark: [Official site](https://www.wireshark.org/), [Ubuntu packages](https://packages.ubuntu.com/search?keywords=wireshark)
