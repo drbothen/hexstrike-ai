@@ -93,35 +93,28 @@ def nbtscan():
         params = request.json
         target = params.get("target", "")
         verbose = params.get("verbose", False)
-        timeout = params.get("timeout", "")
+        timeout = params.get("timeout", 2)
         additional_args = params.get("additional_args", "")
         
         if not target:
-            logger.warning("🎯 NBTScan called without target parameter")
-            return jsonify({
-                "error": "Target parameter is required"
-            }), 400
+            logger.warning("🎯 nbtscan called without target parameter")
+            return jsonify({"error": "Target parameter is required"}), 400
         
-        command = f"nbtscan"
+        command = f"nbtscan -t {timeout}"
         
         if verbose:
             command += " -v"
         
-        if timeout:
-            command += f" -t {timeout}"
+        command += f" {target}"
         
         if additional_args:
             command += f" {additional_args}"
         
-        command += f" {target}"
-        
-        logger.info(f"🔍 Starting NBTScan: {target}")
+        logger.info(f"🔍 Starting nbtscan: {target}")
         result = execute_command(command)
-        logger.info(f"📊 NBTScan completed for {target}")
+        logger.info(f"📊 nbtscan completed for {target}")
         return jsonify(result)
     except Exception as e:
         logger.error(f"💥 Error in nbtscan endpoint: {str(e)}")
-        return jsonify({
-            "error": f"Server error: {str(e)}"
-        }), 500
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
 ```
