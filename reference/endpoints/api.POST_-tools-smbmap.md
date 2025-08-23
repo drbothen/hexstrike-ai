@@ -216,73 +216,36 @@ def smbmap():
     """Execute SMBMap for SMB share enumeration with enhanced logging"""
     try:
         params = request.json
-        host = params.get("host", "")
+        target = params.get("target", "")
         username = params.get("username", "")
         password = params.get("password", "")
         domain = params.get("domain", "")
-        hash_value = params.get("hash", "")
-        share = params.get("share", "")
-        recursive = params.get("recursive", False)
-        download = params.get("download", "")
-        upload = params.get("upload", "")
         additional_args = params.get("additional_args", "")
         
-        if not host:
-            return jsonify({"error": "Host parameter is required"}), 400
+        if not target:
+            logger.warning("🎯 SMBMap called without target parameter")
+            return jsonify({
+                "error": "Target parameter is required"
+            }), 400
         
-        # Base command
-        command = ["smbmap", "-H", host]
+        command = f"smbmap -H {target}"
         
-        # Authentication
         if username:
-            command.extend(["-u", username])
+            command += f" -u {username}"
+            
         if password:
-            command.extend(["-p", password])
+            command += f" -p {password}"
+            
         if domain:
-            command.extend(["-d", domain])
-        if hash_value:
-            command.extend(["--hash", hash_value])
-        
-        # Share enumeration
-        if share:
-            command.extend(["-s", share])
-        
-        # Recursive enumeration
-        if recursive:
-            command.append("-R")
-        
-        # File operations
-        if download:
-            command.extend(["--download", download])
-        if upload:
-            command.extend(["--upload", upload])
-        
-        # Additional arguments
+            command += f" -d {domain}"
+            
         if additional_args:
-            command.extend(additional_args.split())
+            command += f" {additional_args}"
         
-        # Convert to string
-        command_str = " ".join(command)
-        
-        logger.info(f"🔍 Executing smbmap: {command_str}")
-        
-        start_time = time.time()
-        result = execute_command_with_recovery(command_str)
-        execution_time = time.time() - start_time
-        
-        # Parse output for enumeration results
-        enumeration_results = parse_smbmap_output(result["output"])
-        
-        logger.info(f"🔍 SMBMap completed in {execution_time:.2f}s")
-        
-        return jsonify({
-            "success": True,
-            "command": command_str,
-            "enumeration_results": enumeration_results,
-            "raw_output": result["output"],
-            "execution_time": execution_time,
-            "timestamp": datetime.now().isoformat()
-        })
+        logger.info(f"🔍 Starting SMBMap: {target}")
+        result = execute_command(command)
+        logger.info(f"📊 SMBMap completed for {target}")
+        return jsonify(result)
     except Exception as e:
         logger.error(f"💥 Error in smbmap endpoint: {str(e)}")
         return jsonify({
