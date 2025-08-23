@@ -357,4 +357,193 @@ telemetry.record_execution(False, execution_time)  # Failure
 - Timeout handling behavior testing
 
 ## Code Reproduction
-Complete class implementation with 4 methods for enhanced command execution, including real-time output streaming, progress tracking, process management integration, and beautiful result formatting. Essential for robust command execution and process monitoring.
+```python
+class EnhancedCommandExecutor:
+    """Enhanced command executor with caching, progress tracking, and better output handling"""
+    
+    def __init__(self, command: str, timeout: int = COMMAND_TIMEOUT):
+        self.command = command
+        self.timeout = timeout
+        self.process = None
+        self.stdout_data = ""
+        self.stderr_data = ""
+        self.stdout_thread = None
+        self.stderr_thread = None
+        self.return_code = None
+        self.timed_out = False
+        self.start_time = None
+        self.end_time = None
+        
+    def _read_stdout(self):
+        """Thread function to continuously read and display stdout"""
+        try:
+            for line in iter(self.process.stdout.readline, ''):
+                if line:
+                    self.stdout_data += line
+                    logger.info(f"📤 STDOUT: {line.strip()}")
+        except Exception as e:
+            logger.error(f"Error reading stdout: {e}")
+    
+    def _read_stderr(self):
+        """Thread function to continuously read and display stderr"""
+        try:
+            for line in iter(self.process.stderr.readline, ''):
+                if line:
+                    self.stderr_data += line
+                    logger.warning(f"📥 STDERR: {line.strip()}")
+        except Exception as e:
+            logger.error(f"Error reading stderr: {e}")
+    
+    def _show_progress(self, duration: float):
+        """Show enhanced progress indication for long-running commands"""
+        if duration < 2:
+            return
+            
+        progress_chars = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+        char_index = 0
+        
+        while self.process.poll() is None:
+            char = progress_chars[char_index % len(progress_chars)]
+            elapsed = time.time() - self.start_time
+            
+            # Calculate progress metrics
+            progress_percent = min((elapsed / self.timeout) * 100, 99.9)
+            progress_fraction = progress_percent / 100
+            
+            # ETA calculation
+            eta = "calculating..." if progress_percent < 5 else f"{((elapsed / progress_percent) * 100) - elapsed:.1f}s"
+            
+            # Speed calculation
+            bytes_processed = len(self.stdout_data) + len(self.stderr_data)
+            speed = f"{bytes_processed/elapsed:.0f} B/s" if elapsed > 0 else "0 B/s"
+            
+            progress_bar = ModernVisualEngine.render_progress_bar(
+                progress_fraction, 
+                width=30, 
+                style='cyber',
+                label=f"⚡ PROGRESS {char}",
+                eta=eta,
+                speed=speed
+            )
+            
+            logger.info(progress_bar)
+            char_index += 1
+            time.sleep(0.1)
+    
+    def execute(self) -> Dict[str, Any]:
+        """Execute the command with enhanced monitoring and output"""
+        self.start_time = time.time()
+        logger.info(f"🚀 EXECUTING: {self.command}")
+        
+        try:
+            # Create subprocess with pipes
+            self.process = subprocess.Popen(
+                self.command,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                bufsize=1
+            )
+            
+            pid = self.process.pid
+            logger.info(f"🆔 PROCESS: PID {pid} started")
+            
+            # Register with ProcessManager
+            ProcessManager.register_process(pid, self.command, self.process)
+            
+            # Start output reading threads
+            self.stdout_thread = threading.Thread(target=self._read_stdout, daemon=True)
+            self.stderr_thread = threading.Thread(target=self._read_stderr, daemon=True)
+            
+            self.stdout_thread.start()
+            self.stderr_thread.start()
+            
+            # Start progress tracking for long commands
+            progress_thread = threading.Thread(
+                target=self._show_progress, 
+                args=(self.timeout,), 
+                daemon=True
+            )
+            progress_thread.start()
+            
+            # Wait for completion or timeout
+            try:
+                self.return_code = self.process.wait(timeout=self.timeout)
+            except subprocess.TimeoutExpired:
+                self.timed_out = True
+                logger.warning(f"⏰ TIMEOUT: Command timed out after {self.timeout}s | Terminating PID {pid}")
+                self.process.terminate()
+                try:
+                    self.process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    self.process.kill()
+                self.return_code = -1
+            
+            # Wait for threads to complete
+            if self.stdout_thread.is_alive():
+                self.stdout_thread.join(timeout=2)
+            if self.stderr_thread.is_alive():
+                self.stderr_thread.join(timeout=2)
+            
+            self.end_time = time.time()
+            execution_time = self.end_time - self.start_time
+            
+            # Determine success
+            success = True if self.timed_out and (self.stdout_data or self.stderr_data) else (self.return_code == 0)
+            
+            # Log results
+            status_icon = "✅" if success else "❌"
+            timeout_status = " (TIMEOUT)" if self.timed_out else ""
+            output_size = len(self.stdout_data) + len(self.stderr_data)
+            
+            results_summary = f"""
+╭─────────────────────────────────────────────────────────────────────────────╮
+│ 📊 FINAL RESULTS {status_icon}
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 🚀 Command: {self.command[:55]}{'...' if len(self.command) > 55 else ''}
+│ ⏱️ Duration: {execution_time:.2f}s{timeout_status}
+│ 📊 Output Size: {output_size} bytes
+│ 🔢 Exit Code: {self.return_code}
+│ 📈 Status: {'SUCCESS' if success else 'FAILED'} | Cached: Yes
+╰─────────────────────────────────────────────────────────────────────────────╯
+"""
+            logger.info(results_summary)
+            
+            # Record telemetry
+            telemetry.record_execution(success, execution_time)
+            
+            # Cleanup
+            ProcessManager.cleanup_process(pid)
+            
+            return {
+                "stdout": self.stdout_data,
+                "stderr": self.stderr_data,
+                "return_code": self.return_code,
+                "success": success,
+                "timed_out": self.timed_out,
+                "partial_results": self.timed_out and (self.stdout_data or self.stderr_data),
+                "execution_time": execution_time,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            self.end_time = time.time()
+            execution_time = self.end_time - self.start_time if self.start_time else 0
+            
+            logger.error(f"💥 EXECUTION ERROR: {str(e)}")
+            logger.error(f"📋 TRACEBACK: {traceback.format_exc()}")
+            
+            telemetry.record_execution(False, execution_time)
+            
+            return {
+                "stdout": self.stdout_data,
+                "stderr": f"Execution error: {str(e)}\n{self.stderr_data}",
+                "return_code": -1,
+                "success": False,
+                "timed_out": False,
+                "partial_results": bool(self.stdout_data or self.stderr_data),
+                "execution_time": execution_time,
+                "timestamp": datetime.now().isoformat()
+            }
+```

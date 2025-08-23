@@ -128,4 +128,91 @@ Predefined attack sequences for various scenarios:
 - Technology detection accuracy metrics
 
 ## Code Reproduction
-Complete class implementation with all 30+ methods for intelligent security testing automation. Essential for AI-driven tool selection, parameter optimization, and attack planning in the HexStrike framework.
+```python
+class IntelligentDecisionEngine:
+    """AI-powered tool selection and parameter optimization engine"""
+    
+    def __init__(self):
+        self.tool_effectiveness = self._initialize_tool_effectiveness()
+        self.technology_signatures = self._initialize_technology_signatures()
+        self.attack_patterns = self._initialize_attack_patterns()
+        self._use_advanced_optimizer = True  # Enable advanced optimization by default
+    
+    def _initialize_tool_effectiveness(self) -> Dict[str, Dict[TargetType, float]]:
+        """Initialize tool effectiveness ratings for different target types"""
+        return {
+            "nmap": {
+                TargetType.WEB_APPLICATION: 0.8,
+                TargetType.NETWORK_HOST: 0.95,
+                TargetType.API_ENDPOINT: 0.7,
+                TargetType.BINARY_FILE: 0.1,
+                TargetType.CLOUD_SERVICE: 0.85
+            },
+            "nuclei": {
+                TargetType.WEB_APPLICATION: 0.95,
+                TargetType.NETWORK_HOST: 0.6,
+                TargetType.API_ENDPOINT: 0.9,
+                TargetType.BINARY_FILE: 0.1,
+                TargetType.CLOUD_SERVICE: 0.8
+            },
+            # Additional tool effectiveness mappings...
+        }
+    
+    def analyze_target(self, target: str) -> TargetProfile:
+        """Analyze target and create comprehensive profile"""
+        target_type = self._determine_target_type(target)
+        technologies = self._detect_technologies(target)
+        
+        profile = TargetProfile(
+            target=target,
+            target_type=target_type,
+            technologies=technologies,
+            attack_surface=self._calculate_attack_surface(TargetProfile(target, target_type, technologies)),
+            risk_level=self._determine_risk_level(TargetProfile(target, target_type, technologies)),
+            confidence=self._calculate_confidence(TargetProfile(target, target_type, technologies))
+        )
+        
+        return profile
+    
+    def select_optimal_tools(self, profile: TargetProfile, objective: str) -> List[str]:
+        """Select optimal tools based on target profile and objective"""
+        tools = []
+        effectiveness_scores = {}
+        
+        for tool, effectiveness_map in self.tool_effectiveness.items():
+            score = effectiveness_map.get(profile.target_type, 0.5)
+            
+            # Adjust score based on detected technologies
+            for tech in profile.technologies:
+                if tech in self.technology_signatures:
+                    tech_bonus = self.technology_signatures[tech].get(tool, 0)
+                    score += tech_bonus
+            
+            effectiveness_scores[tool] = score
+        
+        # Sort tools by effectiveness and return top selections
+        sorted_tools = sorted(effectiveness_scores.items(), key=lambda x: x[1], reverse=True)
+        return [tool for tool, score in sorted_tools[:10] if score > 0.6]
+    
+    def optimize_parameters(self, tool: str, profile: TargetProfile, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Optimize tool parameters based on target profile and context"""
+        if not self._use_advanced_optimizer:
+            return {}
+        
+        # Tool-specific optimization methods
+        optimizer_map = {
+            "nmap": self._optimize_nmap_params,
+            "gobuster": self._optimize_gobuster_params,
+            "nuclei": self._optimize_nuclei_params,
+            "sqlmap": self._optimize_sqlmap_params,
+            # Additional optimizer mappings...
+        }
+        
+        optimizer = optimizer_map.get(tool)
+        if optimizer:
+            return optimizer(profile, context)
+        
+        return {}
+    
+    # Additional methods: create_attack_chain, _optimize_* methods for each tool, etc.
+```

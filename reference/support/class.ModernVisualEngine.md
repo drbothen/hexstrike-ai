@@ -66,4 +66,68 @@ Provides comprehensive visual formatting capabilities for the HexStrike AI frame
 - Animation timing and performance validation
 
 ## Code Reproduction
-Complete class with all static methods for visual formatting, color management, and status display functionality. Essential for user interface consistency throughout the HexStrike framework.
+```python
+class ModernVisualEngine:
+    """Beautiful, modern output formatting with animations and colors"""
+    
+    # Enhanced color palette with reddish tones and better highlighting
+    COLORS = {
+        'MATRIX_GREEN': '\033[38;5;46m',
+        'NEON_BLUE': '\033[38;5;51m', 
+        'ELECTRIC_PURPLE': '\033[38;5;129m',
+        'CYBER_ORANGE': '\033[38;5;208m',
+        'HACKER_RED': '\033[38;5;196m',
+        'TERMINAL_GRAY': '\033[38;5;240m',
+        'BRIGHT_WHITE': '\033[97m',
+        'RESET': '\033[0m',
+        'BOLD': '\033[1m',
+        'DIM': '\033[2m',
+        # New reddish tones and highlighting colors
+        'BLOOD_RED': '\033[38;5;124m',
+        'CRIMSON': '\033[38;5;160m',
+        'DARK_RED': '\033[38;5;88m',
+        'FIRE_RED': '\033[38;5;202m',
+        'ROSE_RED': '\033[38;5;167m',
+        'BURGUNDY': '\033[38;5;52m',
+        'SCARLET': '\033[38;5;197m',
+        'RUBY': '\033[38;5;161m',
+        # Unified theme primary/secondary
+        'PRIMARY_BORDER': '\033[38;5;160m',  # CRIMSON
+        'ACCENT_LINE': '\033[38;5;196m',      # HACKER_RED
+        'ACCENT_GRADIENT': '\033[38;5;124m',  # BLOOD_RED
+        # Additional color definitions...
+    }
+    
+    @staticmethod
+    def create_banner() -> str:
+        """Create the enhanced HexStrike banner"""
+        border_color = ModernVisualEngine.COLORS['PRIMARY_BORDER']
+        accent = ModernVisualEngine.COLORS['ACCENT_LINE']
+        gradient = ModernVisualEngine.COLORS['ACCENT_GRADIENT']
+        RESET = ModernVisualEngine.COLORS['RESET']
+        BOLD = ModernVisualEngine.COLORS['BOLD']
+        title_block = f"{accent}{BOLD}"
+        banner = f"""
+{title_block}
+██╗  ██╗███████╗██╗  ██╗███████╗████████╗██████╗ ██╗██╗  ██╗███████╗
+██║  ██║██╔════╝╚██╗██╔╝██╔════╝╚══██╔══╝██╔══██╗██║██║ ██╔╝██╔════╝
+███████║█████╗   ╚███╔╝ ███████╗   ██║   ██████╔╝██║█████╔╝ █████╗  
+██╔══██║██╔══╝   ██╔██╗ ╚════██║   ██║   ██╔══██╗██║██╔═██╗ ██╔══╝  
+██║  ██║███████╗██╔╝ ██╗███████║   ██║   ██║  ██║██║██║  ██╗███████╗
+╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝╚══════╝
+{RESET}
+{border_color}┌─────────────────────────────────────────────────────────────────────┐
+│  {ModernVisualEngine.COLORS['BRIGHT_WHITE']}🚀 HexStrike AI - Blood-Red Offensive Intelligence Core{border_color}        │
+│  {accent}⚡ AI-Automated Recon | Exploitation | Analysis Pipeline{border_color}          │
+│  {gradient}🎯 Bug Bounty | CTF | Red Team | Zero-Day Research{border_color}              │
+└─────────────────────────────────────────────────────────────────────┘{RESET}
+
+{ModernVisualEngine.COLORS['TERMINAL_GRAY']}[INFO] Server starting on {API_HOST}:{API_PORT}
+[INFO] 150+ integrated modules | Adaptive AI decision engine active
+[INFO] Blood-red theme engaged – unified offensive operations UI{RESET}
+"""
+        return banner
+    
+    # Additional methods: create_progress_bar, render_progress_bar, create_live_dashboard,
+    # format_vulnerability_card, format_error_card, format_tool_status, etc.
+```

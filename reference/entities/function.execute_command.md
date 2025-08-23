@@ -93,30 +93,30 @@ Enhanced command execution function providing:
 ## Code Reproduction
 ```python
 def execute_command(command: str, use_cache: bool = True) -> Dict[str, Any]:
-    """
-    Execute a shell command with enhanced features
+    """Execute shell command with enhanced features and automatic caching"""
     
-    Args:
-        command: The command to execute
-        use_cache: Whether to use caching for this command
-        
-    Returns:
-        A dictionary containing the stdout, stderr, return code, and metadata
-    """
+    # Generate cache key
+    cache_key = hashlib.md5(command.encode()).hexdigest()
     
-    # Check cache first
+    # Check cache first if enabled
     if use_cache:
-        cached_result = cache.get(command, {})
+        cached_result = cache.get(cache_key)
         if cached_result:
+            logger.info(f"📋 CACHE HIT: Using cached result for command")
+            cached_result["cached"] = True
             return cached_result
     
-    # Execute command
+    # Execute command using EnhancedCommandExecutor
     executor = EnhancedCommandExecutor(command)
     result = executor.execute()
     
-    # Cache successful results
+    # Cache the result if successful and caching is enabled
     if use_cache and result.get("success", False):
-        cache.set(command, {}, result)
+        cache.set(cache_key, result)
+        logger.info(f"💾 CACHED: Command result stored in cache")
+    
+    result["cached"] = False
+    result["command"] = command
     
     return result
 ```
