@@ -211,71 +211,40 @@ def netexec():
     try:
         params = request.json
         target = params.get("target", "")
-        protocol = params.get("protocol", "")
+        protocol = params.get("protocol", "smb")
         username = params.get("username", "")
         password = params.get("password", "")
         hash_value = params.get("hash", "")
-        domain = params.get("domain", "")
-        command = params.get("command", "")
         module = params.get("module", "")
         additional_args = params.get("additional_args", "")
         
-        # Validate required parameters
-        missing_params = []
         if not target:
-            missing_params.append("target")
-        if not protocol:
-            missing_params.append("protocol")
-        if missing_params:
-            return jsonify({"error": f"Missing required parameters: {', '.join(missing_params)}"}), 400
+            logger.warning("🎯 NetExec called without target parameter")
+            return jsonify({
+                "error": "Target parameter is required"
+            }), 400
         
-        # Base command
-        command_list = ["netexec", protocol, target]
+        command = f"nxc {protocol} {target}"
         
-        # Authentication
         if username:
-            command_list.extend(["-u", username])
+            command += f" -u {username}"
+            
         if password:
-            command_list.extend(["-p", password])
+            command += f" -p {password}"
+            
         if hash_value:
-            command_list.extend(["-H", hash_value])
-        if domain:
-            command_list.extend(["-d", domain])
-        
-        # Command execution
-        if command:
-            command_list.extend(["-x", command])
-        
-        # Module execution
+            command += f" -H {hash_value}"
+            
         if module:
-            command_list.extend(["-M", module])
-        
-        # Additional arguments
+            command += f" -M {module}"
+            
         if additional_args:
-            command_list.extend(additional_args.split())
+            command += f" {additional_args}"
         
-        # Convert to string
-        command_str = " ".join(command_list)
-        
-        logger.info(f"🔍 Executing netexec: {command_str}")
-        
-        start_time = time.time()
-        result = execute_command_with_recovery(command_str)
-        execution_time = time.time() - start_time
-        
-        # Parse output for execution results
-        execution_results = parse_netexec_output(result["output"])
-        
-        logger.info(f"🔍 NetExec completed in {execution_time:.2f}s")
-        
-        return jsonify({
-            "success": True,
-            "command": command_str,
-            "execution_results": execution_results,
-            "raw_output": result["output"],
-            "execution_time": execution_time,
-            "timestamp": datetime.now().isoformat()
-        })
+        logger.info(f"🔍 Starting NetExec {protocol} scan: {target}")
+        result = execute_command(command)
+        logger.info(f"📊 NetExec scan completed for {target}")
+        return jsonify(result)
     except Exception as e:
         logger.error(f"💥 Error in netexec endpoint: {str(e)}")
         return jsonify({

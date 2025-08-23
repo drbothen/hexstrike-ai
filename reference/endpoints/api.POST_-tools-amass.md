@@ -229,86 +229,28 @@ def amass():
         params = request.json
         domain = params.get("domain", "")
         mode = params.get("mode", "enum")
-        passive = params.get("passive", False)
-        active = params.get("active", True)
-        brute = params.get("brute", False)
-        wordlist = params.get("wordlist", "")
-        timeout = params.get("timeout", 30)
         additional_args = params.get("additional_args", "")
         
         if not domain:
-            return jsonify({"error": "Domain parameter is required"}), 400
+            logger.warning("🌐 Amass called without domain parameter")
+            return jsonify({
+                "error": "Domain parameter is required"
+            }), 400
         
-        # Base command
-        command = ["amass", mode, "-d", domain]
+        command = f"amass {mode}"
         
-        # Enumeration options
-        if passive:
-            command.append("-passive")
-        if active:
-            command.append("-active")
-        if brute:
-            command.append("-brute")
-            if wordlist:
-                command.extend(["-w", wordlist])
-        
-        # Timeout
-        if timeout:
-            command.extend(["-timeout", str(timeout)])
-        
-        # Output file
-        output_file = f"/tmp/amass_{int(time.time())}.txt"
-        command.extend(["-o", output_file])
-        
-        # Additional arguments
+        if mode == "enum":
+            command += f" -d {domain}"
+        else:
+            command += f" -d {domain}"
+            
         if additional_args:
-            command.extend(additional_args.split())
+            command += f" {additional_args}"
         
-        # Convert to string
-        command_str = " ".join(command)
-        
-        logger.info(f"🔍 Executing amass: {command_str}")
-        
-        start_time = time.time()
-        result = execute_command_with_recovery(command_str)
-        execution_time = time.time() - start_time
-        
-        # Parse output file
-        subdomains = []
-        if os.path.exists(output_file):
-            with open(output_file, "r") as f:
-                for line in f:
-                    subdomain = line.strip()
-                    if subdomain:
-                        # Resolve IP addresses
-                        try:
-                            ip_addresses = socket.gethostbyname_ex(subdomain)[2]
-                        except:
-                            ip_addresses = []
-                        
-                        subdomains.append({
-                            "subdomain": subdomain,
-                            "ip_addresses": ip_addresses,
-                            "source": "Amass"
-                        })
-        
-        enumeration_results = {
-            "domain": domain,
-            "subdomains": subdomains,
-            "total_subdomains": len(subdomains),
-            "sources": ["DNS", "Certificate", "Scraping"]
-        }
-        
-        logger.info(f"🔍 Amass completed in {execution_time:.2f}s | Found: {len(subdomains)} subdomains")
-        
-        return jsonify({
-            "success": True,
-            "command": command_str,
-            "enumeration_results": enumeration_results,
-            "raw_output": result["output"],
-            "execution_time": execution_time,
-            "timestamp": datetime.now().isoformat()
-        })
+        logger.info(f"🔍 Starting Amass {mode}: {domain}")
+        result = execute_command(command)
+        logger.info(f"📊 Amass completed for {domain}")
+        return jsonify(result)
     except Exception as e:
         logger.error(f"💥 Error in amass endpoint: {str(e)}")
         return jsonify({
