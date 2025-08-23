@@ -307,104 +307,51 @@ def nmap_advanced():
     try:
         params = request.json
         target = params.get("target", "")
-        scan_type = params.get("scan_type", "comprehensive")
-        ports = params.get("ports", "top1000")
-        timing_template = params.get("timing_template", "4")
-        script_categories = params.get("script_categories", [])
-        custom_scripts = params.get("custom_scripts", [])
-        output_format = params.get("output_format", "all")
-        service_detection = params.get("service_detection", True)
-        os_detection = params.get("os_detection", True)
+        scan_type = params.get("scan_type", "-sS")
+        ports = params.get("ports", "")
+        timing = params.get("timing", "T4")
+        nse_scripts = params.get("nse_scripts", "")
+        os_detection = params.get("os_detection", False)
+        version_detection = params.get("version_detection", False)
+        aggressive = params.get("aggressive", False)
+        stealth = params.get("stealth", False)
         additional_args = params.get("additional_args", "")
         
         if not target:
+            logger.warning("🎯 Advanced Nmap called without target parameter")
             return jsonify({"error": "Target parameter is required"}), 400
         
-        valid_scan_types = ["comprehensive", "quick", "stealth", "vulnerability", "discovery"]
-        if scan_type not in valid_scan_types:
-            return jsonify({"error": f"Invalid scan type: {scan_type}"}), 400
+        command = f"nmap {scan_type} {target}"
         
-        # Base command
-        command = ["nmap"]
+        if ports:
+            command += f" -p {ports}"
         
-        # Scan type options
-        if scan_type == "comprehensive":
-            command.extend(["-sS", "-sV", "-O", "-A"])
-        elif scan_type == "quick":
-            command.extend(["-F", "-T4"])
-        elif scan_type == "stealth":
-            command.extend(["-sS", "-T2", "--data-length", "15"])
-        elif scan_type == "vulnerability":
-            command.extend(["-sV", "--script=vuln"])
-        elif scan_type == "discovery":
-            command.extend(["-sn", "-PE", "-PP", "-PS", "-PA", "--script=discovery"])
-        
-        # Port options
-        if ports == "all":
-            command.append("-p-")
-        elif ports == "top1000":
-            command.append("--top-ports 1000")
-        elif ports == "common":
-            command.append("--top-ports 100")
+        if stealth:
+            command += " -T2 -f --mtu 24"
         else:
-            command.append(f"-p {ports}")
+            command += f" -{timing}"
         
-        # Timing template
-        command.append(f"-T{timing_template}")
-        
-        # Service and OS detection
-        if service_detection:
-            command.append("-sV")
         if os_detection:
-            command.append("-O")
+            command += " -O"
         
-        # Script options
-        if script_categories:
-            script_str = ",".join(script_categories)
-            command.append(f"--script={script_str}")
-        if custom_scripts:
-            custom_script_str = ",".join(custom_scripts)
-            command.append(f"--script={custom_script_str}")
+        if version_detection:
+            command += " -sV"
         
-        # Output format
-        if output_format == "all" or "xml" in output_format:
-            command.extend(["-oX", f"/tmp/nmap_scan_{int(time.time())}.xml"])
-        if output_format == "all" or "json" in output_format:
-            command.extend(["-oJ", f"/tmp/nmap_scan_{int(time.time())}.json"])
-        if output_format == "all" or "grepable" in output_format:
-            command.extend(["-oG", f"/tmp/nmap_scan_{int(time.time())}.gnmap"])
-        if output_format == "all" or "normal" in output_format:
-            command.extend(["-oN", f"/tmp/nmap_scan_{int(time.time())}.nmap"])
+        if aggressive:
+            command += " -A"
         
-        # Additional arguments
+        if nse_scripts:
+            command += f" --script={nse_scripts}"
+        elif not aggressive:  # Default useful scripts if not aggressive
+            command += " --script=default,discovery,safe"
+        
         if additional_args:
-            command.extend(additional_args.split())
+            command += f" {additional_args}"
         
-        # Target
-        command.append(target)
-        
-        # Convert to string
-        command_str = " ".join(command)
-        
-        logger.info(f"🔍 Executing advanced Nmap scan: {command_str}")
-        
-        start_time = time.time()
-        result = execute_command_with_recovery(command_str)
-        execution_time = time.time() - start_time
-        
-        # Parse output to structured format
-        scan_results = parse_nmap_output(result["output"])
-        
-        logger.info(f"🔍 Advanced Nmap scan completed in {execution_time:.2f}s")
-        
-        return jsonify({
-            "success": True,
-            "command": command_str,
-            "scan_results": scan_results,
-            "raw_output": result["output"][:1000] + "..." if len(result["output"]) > 1000 else result["output"],
-            "execution_time": execution_time,
-            "timestamp": datetime.now().isoformat()
-        })
+        logger.info(f"🔍 Starting Advanced Nmap: {target}")
+        result = execute_command(command)
+        logger.info(f"📊 Advanced Nmap completed for {target}")
+        return jsonify(result)
     except Exception as e:
         logger.error(f"💥 Error in advanced nmap endpoint: {str(e)}")
         return jsonify({"error": f"Server error: {str(e)}"}), 500
