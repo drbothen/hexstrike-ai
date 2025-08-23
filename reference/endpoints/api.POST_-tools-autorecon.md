@@ -229,86 +229,34 @@ def autorecon():
     """Execute AutoRecon for comprehensive automated reconnaissance"""
     try:
         params = request.json
-        targets = params.get("targets", [])
-        output_dir = params.get("output_dir", "./results")
-        port_scans = params.get("port_scans", "top-ports")
+        target = params.get("target", "")
+        output_dir = params.get("output_dir", "/tmp/autorecon")
+        port_scans = params.get("port_scans", "top-100-ports")
         service_scans = params.get("service_scans", "default")
         heartbeat = params.get("heartbeat", 60)
-        timeout = params.get("timeout", 3600)
-        concurrent_targets = params.get("concurrent_targets", 5)
-        concurrent_scans = params.get("concurrent_scans", 10)
-        profile = params.get("profile", "default")
+        timeout = params.get("timeout", 300)
         additional_args = params.get("additional_args", "")
         
-        if not targets:
-            return jsonify({"error": "Targets parameter is required"}), 400
+        if not target:
+            logger.warning("🎯 AutoRecon called without target parameter")
+            return jsonify({"error": "Target parameter is required"}), 400
         
-        # Base command
-        command = ["autorecon"]
+        command = f"autorecon {target} -o {output_dir} --heartbeat {heartbeat} --timeout {timeout}"
         
-        # Targets
-        command.extend(targets)
+        if port_scans != "default":
+            command += f" --port-scans {port_scans}"
         
-        # Output directory
-        command.extend(["--output", output_dir])
-        
-        # Port scans
-        if port_scans != "top-ports":
-            command.extend(["--port-scans", port_scans])
-        
-        # Service scans
         if service_scans != "default":
-            command.extend(["--service-scans", service_scans])
+            command += f" --service-scans {service_scans}"
         
-        # Heartbeat
-        if heartbeat != 60:
-            command.extend(["--heartbeat", str(heartbeat)])
-        
-        # Timeout
-        if timeout != 3600:
-            command.extend(["--timeout", str(timeout)])
-        
-        # Concurrent targets
-        if concurrent_targets != 5:
-            command.extend(["--concurrent-targets", str(concurrent_targets)])
-        
-        # Concurrent scans
-        if concurrent_scans != 10:
-            command.extend(["--concurrent-scans", str(concurrent_scans)])
-        
-        # Profile
-        if profile != "default":
-            command.extend(["--profile", profile])
-        
-        # Additional arguments
         if additional_args:
-            command.extend(additional_args.split())
+            command += f" {additional_args}"
         
-        # Convert to string
-        command_str = " ".join(command)
-        
-        logger.info(f"🔍 Executing autorecon: {command_str}")
-        
-        start_time = time.time()
-        result = execute_command_with_recovery(command_str)
-        execution_time = time.time() - start_time
-        
-        # Parse output for reconnaissance results
-        reconnaissance_results = parse_autorecon_output(result["output"], targets, output_dir)
-        
-        logger.info(f"🔍 AutoRecon completed in {execution_time:.2f}s | Targets: {len(targets)}")
-        
-        return jsonify({
-            "success": True,
-            "command": command_str,
-            "reconnaissance_results": reconnaissance_results,
-            "raw_output": result["output"],
-            "execution_time": execution_time,
-            "timestamp": datetime.now().isoformat()
-        })
+        logger.info(f"🔄 Starting AutoRecon: {target}")
+        result = execute_command(command)
+        logger.info(f"📊 AutoRecon completed for {target}")
+        return jsonify(result)
     except Exception as e:
         logger.error(f"💥 Error in autorecon endpoint: {str(e)}")
-        return jsonify({
-            "error": f"Server error: {str(e)}"
-        }), 500
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
 ```
