@@ -185,4 +185,53 @@ if commands and os.path.exists("/tmp/gdb_commands.txt"):
 - Batch mode operation validation
 
 ## Code Reproduction
-Complete Flask endpoint implementation for GDB binary analysis and debugging with script execution support, automated batch mode, and comprehensive binary analysis capabilities. Essential for reverse engineering and vulnerability research workflows.
+```python
+# From line 10091: Complete Flask endpoint implementation
+@app.route("/api/tools/gdb", methods=["POST"])
+def gdb():
+    """Execute GDB for binary analysis and debugging with enhanced logging"""
+    try:
+        params = request.json
+        binary = params.get("binary", "")
+        commands = params.get("commands", "")
+        script_file = params.get("script_file", "")
+        additional_args = params.get("additional_args", "")
+        
+        if not binary:
+            logger.warning("🔧 GDB called without binary parameter")
+            return jsonify({"error": "Binary parameter is required"}), 400
+        
+        command = f"gdb {binary}"
+        
+        # Handle script file or commands
+        if script_file:
+            command += f" -x {script_file}"
+        elif commands:
+            # Create temporary script file for commands
+            temp_script = "/tmp/gdb_commands.txt"
+            with open(temp_script, "w") as f:
+                f.write(commands)
+            command += f" -x {temp_script}"
+        
+        # Add batch mode for automated execution
+        command += " -batch"
+        
+        if additional_args:
+            command += f" {additional_args}"
+        
+        logger.info(f"🔧 Starting GDB analysis: {binary}")
+        result = execute_command(command)
+        logger.info(f"📊 GDB analysis completed for {binary}")
+        
+        # Clean up temporary script file
+        if commands and os.path.exists("/tmp/gdb_commands.txt"):
+            try:
+                os.remove("/tmp/gdb_commands.txt")
+            except:
+                pass
+        
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"💥 Error in gdb endpoint: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+```

@@ -194,4 +194,50 @@ except:
 - Exploit execution functionality testing
 
 ## Code Reproduction
-Complete Flask endpoint implementation for Pwntools exploit development and automation with script execution support, target configuration, and comprehensive exploitation framework capabilities. Essential for exploit development and binary exploitation workflows.
+```python
+# From line 10425: Complete Flask endpoint implementation
+@app.route("/api/tools/pwntools", methods=["POST"])
+def pwntools():
+    """Execute Pwntools for exploit development and automation"""
+    try:
+        params = request.json
+        script_content = params.get("script_content", "")
+        target_binary = params.get("target_binary", "")
+        target_host = params.get("target_host", "")
+        target_port = params.get("target_port", 0)
+        exploit_type = params.get("exploit_type", "local")  # local, remote, format_string, rop
+        additional_args = params.get("additional_args", "")
+        
+        if not script_content and not target_binary:
+            logger.warning("🔧 Pwntools called without script content or target binary")
+            return jsonify({"error": "Script content or target binary is required"}), 400
+        
+        # Create temporary script file
+        script_file = f"/tmp/pwntools_script_{datetime.now().strftime('%Y%m%d_%H%M%S')}.py"
+        
+        if script_content:
+            with open(script_file, 'w') as f:
+                f.write(script_content)
+        else:
+            # Generate basic exploit template
+            template = generate_pwntools_template(target_binary, exploit_type, target_host, target_port)
+            with open(script_file, 'w') as f:
+                f.write(template)
+        
+        command = f"python3 {script_file}"
+        
+        if additional_args:
+            command += f" {additional_args}"
+        
+        logger.info(f"🔧 Starting Pwntools exploit: {exploit_type}")
+        result = execute_command(command)
+        logger.info(f"📊 Pwntools exploit completed")
+        
+        # Clean up temporary file
+        os.remove(script_file)
+        
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"💥 Error in pwntools endpoint: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+```

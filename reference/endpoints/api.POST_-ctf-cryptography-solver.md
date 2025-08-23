@@ -232,4 +232,93 @@ if cipher_type in ["substitution", "caesar", "vigenere"] or "substitution" in re
 - Analysis result accuracy validation
 
 ## Code Reproduction
-Complete Flask endpoint implementation for advanced cryptography challenge solving with automatic cipher identification, frequency analysis, hash detection, and comprehensive tool recommendations. Essential for CTF cryptography challenges and cryptanalysis workflows.
+```python
+# From line 14394: Complete Flask endpoint implementation
+@app.route("/api/ctf/cryptography-solver", methods=["POST"])
+def ctf_cryptography_solver():
+    """Advanced cryptography challenge solver with multiple attack methods"""
+    try:
+        params = request.json
+        cipher_text = params.get("cipher_text", "")
+        cipher_type = params.get("cipher_type", "unknown")
+        key_hint = params.get("key_hint", "")
+        known_plaintext = params.get("known_plaintext", "")
+        additional_info = params.get("additional_info", "")
+        
+        if not cipher_text:
+            logger.warning("🔐 CTF crypto solver called without cipher text")
+            return jsonify({"error": "Cipher text is required"}), 400
+        
+        results = {
+            "cipher_text": cipher_text,
+            "cipher_type": cipher_type,
+            "analysis_results": [],
+            "potential_solutions": [],
+            "recommended_tools": [],
+            "next_steps": []
+        }
+        
+        # Cipher type identification using heuristics
+        clean_text = cipher_text.replace(' ', '').replace('\n', '')
+        
+        # Check for hexadecimal encoding
+        if re.match(r'^[0-9a-fA-F]+$', clean_text):
+            results["analysis_results"].append("Possible hexadecimal encoding")
+            results["recommended_tools"].extend(["hex", "xxd"])
+            results["next_steps"].append("Try hex decoding")
+        
+        # Check for Base64 encoding
+        if re.match(r'^[A-Za-z0-9+/]+=*$', clean_text):
+            results["analysis_results"].append("Possible Base64 encoding")
+            results["recommended_tools"].append("base64")
+            results["next_steps"].append("Try Base64 decoding")
+        
+        # Check for hash patterns
+        hash_patterns = {32: "MD5", 40: "SHA1", 64: "SHA256", 128: "SHA512"}
+        if len(clean_text) in hash_patterns and re.match(r'^[0-9a-fA-F]+$', clean_text):
+            hash_type = hash_patterns[len(clean_text)]
+            results["analysis_results"].append(f"Possible {hash_type} hash")
+            results["recommended_tools"].extend(["hashcat", "john", "hash-identifier"])
+            results["next_steps"].append(f"Try cracking {hash_type} hash with wordlists")
+        
+        # Check for substitution cipher patterns
+        if len(set(cipher_text.upper().replace(' ', ''))) <= 26:
+            results["analysis_results"].append("Possible substitution cipher")
+            results["recommended_tools"].extend(["frequency-analysis", "substitution-solver"])
+        
+        # Frequency analysis for substitution ciphers
+        if cipher_type in ["substitution", "caesar", "vigenere"] or "substitution" in str(results["analysis_results"]):
+            char_freq = {}
+            for char in cipher_text.upper():
+                if char.isalpha():
+                    char_freq[char] = char_freq.get(char, 0) + 1
+            
+            if char_freq:
+                most_common = max(char_freq, key=char_freq.get)
+                results["analysis_results"].append(f"Most frequent character: {most_common} ({char_freq[most_common]} occurrences)")
+                results["next_steps"].append("Try substituting most frequent character with 'E'")
+        
+        # Caesar cipher specific analysis
+        if cipher_type == "caesar" or len(set(cipher_text.upper().replace(' ', ''))) <= 26:
+            results["next_steps"].append("Try all ROT values (1-25)")
+            results["recommended_tools"].append("caesar-cipher-solver")
+        
+        # RSA specific analysis
+        if cipher_type == "rsa" or "rsa" in additional_info.lower():
+            results["next_steps"].extend([
+                "Check if modulus can be factored",
+                "Try small exponent attacks",
+                "Check for common modulus attacks"
+            ])
+            results["recommended_tools"].extend(["rsatool", "factordb", "yafu"])
+        
+        logger.info(f"🔐 CTF crypto analysis completed | Type: {cipher_type} | Tools: {len(results['recommended_tools'])}")
+        return jsonify({
+            "success": True,
+            "analysis": results,
+            "timestamp": datetime.now().isoformat()
+        })
+    except Exception as e:
+        logger.error(f"💥 Error in CTF crypto solver: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+```

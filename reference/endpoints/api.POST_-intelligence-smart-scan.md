@@ -293,4 +293,103 @@ success_rate = len(successful_tools) / len(selected_tools) * 100 if selected_too
 - Vulnerability detection accuracy assessment
 
 ## Code Reproduction
-Complete Flask endpoint implementation for intelligent automated scanning with AI-driven tool selection, parallel execution, vulnerability detection, and comprehensive reporting. Essential for automated security testing and penetration testing workflows.
+```python
+# From line 7803: Complete Flask endpoint implementation
+@app.route("/api/intelligence/smart-scan", methods=["POST"])
+def intelligent_smart_scan():
+    """Execute an intelligent scan using AI-driven tool selection and parameter optimization with parallel execution"""
+    try:
+        params = request.json
+        target = params.get("target", "")
+        objective = params.get("objective", "comprehensive")
+        max_tools = params.get("max_tools", 5)
+        
+        if not target:
+            logger.warning("🎯 Intelligent smart scan called without target parameter")
+            return jsonify({"error": "Target parameter is required"}), 400
+        
+        logger.info(f"🧠 Starting intelligent scan for {target} with objective: {objective}")
+        
+        # Analyze target using IntelligentDecisionEngine
+        profile = decision_engine.analyze_target(target)
+        logger.info(f"📊 Target analysis completed: {profile.get('target_type', 'unknown')}")
+        
+        # Select optimal tools based on target profile and objective
+        selected_tools = decision_engine.select_optimal_tools(profile, objective)[:max_tools]
+        logger.info(f"🔧 Selected {len(selected_tools)} tools: {', '.join(selected_tools)}")
+        
+        # Execute tools in parallel using ThreadPoolExecutor
+        scan_results = {
+            "target": target,
+            "target_profile": profile,
+            "tools_executed": [],
+            "total_vulnerabilities": 0,
+            "combined_output": ""
+        }
+        
+        successful_tools = []
+        failed_tools = []
+        total_execution_time = 0
+        
+        with ThreadPoolExecutor(max_workers=min(len(selected_tools), 5)) as executor:
+            # Submit all tool executions
+            future_to_tool = {
+                executor.submit(execute_single_tool, tool, target, profile): tool 
+                for tool in selected_tools
+            }
+            
+            # Collect results as they complete
+            for future in as_completed(future_to_tool):
+                tool = future_to_tool[future]
+                try:
+                    tool_result = future.result()
+                    tool_result["tool"] = tool
+                    scan_results["tools_executed"].append(tool_result)
+                    
+                    if tool_result.get("success", False):
+                        successful_tools.append(tool)
+                        total_execution_time += tool_result.get("execution_time", 0)
+                        
+                        # Count vulnerabilities using pattern matching
+                        output = tool_result.get("stdout", "")
+                        vuln_indicators = ['CRITICAL', 'HIGH', 'MEDIUM', 'VULNERABILITY', 'EXPLOIT', 'SQL injection', 'XSS', 'CSRF']
+                        vuln_count = sum(1 for indicator in vuln_indicators if indicator.lower() in output.lower())
+                        tool_result["vulnerabilities_found"] = vuln_count
+                        scan_results["total_vulnerabilities"] += vuln_count
+                        
+                        # Add to combined output
+                        scan_results["combined_output"] += f"\n=== {tool.upper()} OUTPUT ===\n"
+                        scan_results["combined_output"] += output
+                        scan_results["combined_output"] += "\n" + "="*50 + "\n"
+                    else:
+                        failed_tools.append(tool)
+                        
+                except Exception as e:
+                    logger.error(f"💥 Error executing {tool}: {str(e)}")
+                    failed_tools.append(tool)
+        
+        # Generate execution summary
+        scan_results["execution_summary"] = {
+            "total_tools": len(selected_tools),
+            "successful_tools": len(successful_tools),
+            "failed_tools": len(failed_tools),
+            "success_rate": len(successful_tools) / len(selected_tools) * 100 if selected_tools else 0,
+            "total_execution_time": total_execution_time,
+            "tools_used": successful_tools
+        }
+        
+        logger.info(f"📊 Intelligent scan completed for {target}. Found {scan_results['total_vulnerabilities']} vulnerabilities using {len(successful_tools)} tools")
+        
+        return jsonify({
+            "success": True,
+            "scan_results": scan_results,
+            "timestamp": datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"💥 Error in intelligent smart scan endpoint: {str(e)}")
+        return jsonify({
+            "error": f"Server error: {str(e)}",
+            "success": False
+        }), 500
+```

@@ -187,4 +187,44 @@ except Exception as e:
 - File cleanup functionality validation
 
 ## Code Reproduction
-Complete Flask endpoint implementation for Metasploit module execution with automatic resource script generation, configurable options, and comprehensive logging. Essential for penetration testing and security assessment workflows.
+```python
+# From line 9180: Complete Flask endpoint implementation
+@app.route("/api/tools/metasploit", methods=["POST"])
+def metasploit():
+    """Execute metasploit module with enhanced logging"""
+    try:
+        params = request.json
+        module = params.get("module", "")
+        options = params.get("options", {})
+        
+        if not module:
+            logger.warning("🚀 Metasploit called without module parameter")
+            return jsonify({"error": "Module parameter is required"}), 400
+        
+        # Create MSF resource script
+        resource_content = f"use {module}\n"
+        for key, value in options.items():
+            resource_content += f"set {key} {value}\n"
+        resource_content += "exploit\n"
+        
+        resource_file = "/tmp/mcp_msf_resource.rc"
+        with open(resource_file, "w") as f:
+            f.write(resource_content)
+        
+        command = f"msfconsole -q -r {resource_file}"
+        
+        logger.info(f"🚀 Starting Metasploit module: {module}")
+        result = execute_command(command)
+        logger.info(f"📊 Metasploit module completed: {module}")
+        
+        # Clean up resource file
+        try:
+            os.remove(resource_file)
+        except Exception as e:
+            logger.warning(f"Error removing temporary resource file: {str(e)}")
+        
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"💥 Error in metasploit endpoint: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+```

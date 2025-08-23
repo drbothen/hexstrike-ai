@@ -251,4 +251,80 @@ elif action == "intruder":
 - Spider functionality validation
 
 ## Code Reproduction
-Complete Flask endpoint implementation for HTTP testing framework providing Burp Suite alternative functionality with request interception, website spidering, proxy history, match/replace rules, and intruder capabilities. Essential for comprehensive web application security testing workflows.
+```python
+# From line 12170: Complete Flask endpoint implementation
+@app.route("/api/tools/http-framework", methods=["POST"])
+def http_framework_endpoint():
+    """Enhanced HTTP testing framework (Burp Suite alternative)"""
+    try:
+        params = request.json
+        action = params.get("action", "")
+        url = params.get("url", "")
+        method = params.get("method", "GET")
+        data = params.get("data", {})
+        headers = params.get("headers", {})
+        cookies = params.get("cookies", {})
+        max_depth = params.get("max_depth", 3)
+        max_pages = params.get("max_pages", 100)
+        rules = params.get("rules", [])
+        scope_host = params.get("host", "")
+        include_sub = params.get("include_subdomains", False)
+        request_spec = params.get("request", {})
+        location = params.get("location", "")
+        fuzz_params = params.get("params", [])
+        payloads = params.get("payloads", [])
+        base_data = params.get("base_data", {})
+        max_requests = params.get("max_requests", 100)
+        
+        if not action:
+            logger.warning("🔥 HTTP Framework called without action parameter")
+            return jsonify({"error": "Action parameter is required"}), 400
+        
+        logger.info(f"🔥 HTTP FRAMEWORK - Action: {action}")
+        
+        if action == "request":
+            if not url:
+                return jsonify({"error": "URL parameter is required for request action"}), 400
+            result = http_framework.intercept_request(url, method, data, headers, cookies)
+            
+        elif action == "spider":
+            if not url:
+                return jsonify({"error": "URL parameter is required for spider action"}), 400
+            result = http_framework.spider_website(url, max_depth, max_pages)
+            
+        elif action == "proxy_history":
+            return jsonify({
+                "success": True,
+                "history": http_framework.proxy_history[-100:],
+                "total_requests": len(http_framework.proxy_history),
+                "vulnerabilities": http_framework.vulnerabilities,
+            })
+            
+        elif action == "set_rules":
+            http_framework.set_match_replace_rules(rules)
+            return jsonify({"success": True, "message": "Match/replace rules updated"})
+            
+        elif action == "set_scope":
+            http_framework.set_scope(scope_host, include_sub)
+            return jsonify({"success": True, "message": "Scope updated"})
+            
+        elif action == "repeater":
+            result = http_framework.send_custom_request(request_spec)
+            
+        elif action == "intruder":
+            if not url:
+                return jsonify({"error": "URL parameter is required for intruder action"}), 400
+            result = http_framework.intruder_sniper(
+                url, method, location, fuzz_params, payloads, base_data, max_requests
+            )
+            
+        else:
+            return jsonify({"error": f"Unknown action: {action}"}), 400
+        
+        logger.info(f"📊 HTTP Framework {action} completed")
+        return jsonify(result)
+        
+    except Exception as e:
+        logger.error(f"💥 Error in http-framework endpoint: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+```

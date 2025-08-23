@@ -188,4 +188,42 @@ for tech in profile.technologies:
 - Integration with decision engine testing
 
 ## Code Reproduction
-Complete Flask endpoint implementation for technology detection and recommendation generation, including technology-specific tool recommendations, focus areas, and priority assessment. Essential for technology-focused security testing and assessment.
+```python
+# From line 7697: Complete Flask endpoint implementation
+@app.route("/api/intelligence/technology-detection", methods=["POST"])
+def technology_detection():
+    """Detect technologies and generate recommendations using AI intelligence"""
+    try:
+        params = request.json
+        target = params.get("target", "")
+        detection_depth = params.get("detection_depth", "standard")
+        include_recommendations = params.get("include_recommendations", True)
+        
+        if not target:
+            logger.warning("🔍 Technology detection called without target parameter")
+            return jsonify({"error": "Target parameter is required"}), 400
+        
+        logger.info(f"🔍 Starting technology detection for {target}")
+        
+        # Use IntelligentDecisionEngine for technology detection
+        profile = decision_engine.analyze_target(target)
+        technologies = decision_engine._detect_technologies(target)
+        
+        results = {
+            "target": target,
+            "detection_depth": detection_depth,
+            "technologies": technologies,
+            "target_profile": profile
+        }
+        
+        # Generate technology-specific recommendations
+        if include_recommendations:
+            recommendations = decision_engine.generate_technology_recommendations(technologies, profile)
+            results["recommendations"] = recommendations
+        
+        logger.info(f"📊 Technology detection completed for {target}")
+        return jsonify(results)
+    except Exception as e:
+        logger.error(f"💥 Error in technology detection endpoint: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+```
