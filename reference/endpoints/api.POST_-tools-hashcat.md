@@ -257,101 +257,38 @@ def hashcat():
     try:
         params = request.json
         hash_file = params.get("hash_file", "")
-        attack_mode = params.get("attack_mode", 0)
-        hash_type = params.get("hash_type", 0)
-        wordlist = params.get("wordlist", "")
-        rules = params.get("rules", "")
+        hash_type = params.get("hash_type", "")
+        attack_mode = params.get("attack_mode", "0")
+        wordlist = params.get("wordlist", "/usr/share/wordlists/rockyou.txt")
         mask = params.get("mask", "")
-        increment = params.get("increment", False)
-        optimized = params.get("optimized", True)
         additional_args = params.get("additional_args", "")
         
         if not hash_file:
-            return jsonify({"error": "Hash file parameter is required"}), 400
+            logger.warning("🔐 Hashcat called without hash_file parameter")
+            return jsonify({
+                "error": "Hash file parameter is required"
+            }), 400
+            
+        if not hash_type:
+            logger.warning("🔐 Hashcat called without hash_type parameter")
+            return jsonify({
+                "error": "Hash type parameter is required"
+            }), 400
         
-        if not os.path.exists(hash_file):
-            return jsonify({"error": f"Hash file not found: {hash_file}"}), 404
+        command = f"hashcat -m {hash_type} -a {attack_mode} {hash_file}"
         
-        # Base command
-        command = ["hashcat", "-m", str(hash_type), "-a", str(attack_mode)]
-        
-        # Optimized kernels
-        if optimized:
-            command.append("-O")
-        
-        # Increment mode
-        if increment:
-            command.append("--increment")
-        
-        # Rules
-        if rules:
-            command.extend(["-r", rules])
-        
-        # Hash file
-        command.append(hash_file)
-        
-        # Attack-specific parameters
-        if attack_mode == 0 and wordlist:  # Dictionary attack
-            command.append(wordlist)
-        elif attack_mode == 3 and mask:  # Brute force attack
-            command.append(mask)
-        
-        # Output file for cracked hashes
-        output_file = f"/tmp/hashcat_output_{int(time.time())}.txt"
-        command.extend(["--outfile", output_file])
-        
-        # Additional arguments
+        if attack_mode == "0" and wordlist:
+            command += f" {wordlist}"
+        elif attack_mode == "3" and mask:
+            command += f" {mask}"
+            
         if additional_args:
-            command.extend(additional_args.split())
+            command += f" {additional_args}"
         
-        # Convert to string
-        command_str = " ".join(command)
-        
-        logger.info(f"🔍 Executing hashcat: {command_str}")
-        
-        start_time = time.time()
-        result = execute_command_with_recovery(command_str)
-        execution_time = time.time() - start_time
-        
-        # Parse cracked passwords from output file
-        cracked_passwords = []
-        if os.path.exists(output_file):
-            with open(output_file, "r") as f:
-                for line in f:
-                    if ":" in line:
-                        parts = line.strip().split(":")
-                        if len(parts) >= 2:
-                            hash_value = parts[0]
-                            password = ":".join(parts[1:])
-                            cracked_passwords.append({
-                                "hash": hash_value,
-                                "password": password,
-                                "hash_type": get_hash_type_name(hash_type)
-                            })
-        
-        # Count total hashes
-        total_hashes = 0
-        with open(hash_file, "r") as f:
-            total_hashes = sum(1 for line in f if line.strip())
-        
-        cracking_results = {
-            "total_hashes": total_hashes,
-            "cracked_hashes": len(cracked_passwords),
-            "cracking_rate": (len(cracked_passwords) / total_hashes * 100) if total_hashes > 0 else 0,
-            "cracked_passwords": cracked_passwords,
-            "performance": parse_hashcat_performance(result["output"])
-        }
-        
-        logger.info(f"🔍 Hashcat completed in {execution_time:.2f}s | Cracked: {len(cracked_passwords)}/{total_hashes}")
-        
-        return jsonify({
-            "success": True,
-            "command": command_str,
-            "cracking_results": cracking_results,
-            "raw_output": result["output"],
-            "execution_time": execution_time,
-            "timestamp": datetime.now().isoformat()
-        })
+        logger.info(f"🔐 Starting Hashcat attack: mode {attack_mode}")
+        result = execute_command(command)
+        logger.info(f"📊 Hashcat attack completed")
+        return jsonify(result)
     except Exception as e:
         logger.error(f"💥 Error in hashcat endpoint: {str(e)}")
         return jsonify({
